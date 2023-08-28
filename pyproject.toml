@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "rslv"
+version = "0.1.0"
+description = "Provides an identifier resolver service in FastAPI."
+authors = ["datadave <605409+datadavev@users.noreply.github.com>"]
+license = "MIT"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+fastapi = "^0"
+pydantic-settings = "^2"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
