@@ -4,6 +4,9 @@ __pycache__/
 *.py[cod]
 *$py.class
 old_cruft_stash/
+.DS_Store
+.idea
+rslv/data
 
 # C extensions
 *.so
