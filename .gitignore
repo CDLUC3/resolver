@@ -1,7 +1,9 @@
+.envrc
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
 *$py.class
+old_cruft_stash/
 
 # C extensions
 *.so
