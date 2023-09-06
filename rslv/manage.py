@@ -156,8 +156,8 @@ def load_public_naans(ctx, url):
             if target is None:
                 target = "/.info/{pid}"
             else:
-                target = target.replace("$arkpid", "ark:{prefix}/{value}")
-            canonical = "ark:{prefix}/{value}"
+                target = target.replace("$arkpid", "ark:/{prefix}/{value}")
+            canonical = "ark:/{prefix}/{value}"
             entry = rslv.lib_rslv.piddefine.PidDefinition(
                 scheme="ark",
                 prefix=naan,
