@@ -27,7 +27,9 @@ app = fastapi.FastAPI(
         "url": "https://opensource.org/license/mit/",
     },
     # Need to add this here because adding to the router has no effect.
-    lifespan=routers.resolver.resolver_lifespan
+    lifespan=routers.resolver.resolver_lifespan,
+    openapi_url="/api/v1/openapi.json",
+    docs_url="/api"
 )
 
 # Enables CORS for UIs on different domains
