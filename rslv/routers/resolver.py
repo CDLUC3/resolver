@@ -61,11 +61,26 @@ def get_info(
         raw_identifier = raw_identifier[:-5]
     raw_identifier = raw_identifier.rstrip("?")
     pid_parts, definition = pid_config.parse(raw_identifier)
+    # TODO: This is where a definition specific handler can be used for
+    #   further processing of the PID, e.g. to remove hyphens from an ark.
+    #   Basically, add a property to the definition that contains the name
+    #   of a handler, then if set, load the handler and have it process the
+    #   rendering of the PID.
     if definition is not None:
         pid_parts["target"] = definition.target.format(**pid_parts)
         pid_parts["canonical"] = definition.canonical.format(**pid_parts)
         pid_parts["status_code"] = definition.http_code
         pid_parts["properties"] = definition.properties
+        defn = {
+            "uniq": definition.uniq,
+            "scheme": definition.scheme,
+            "prefix": definition.prefix,
+            "value": definition.value,
+            "target": definition.target,
+            "canonical": definition.canonical,
+            "synonym_for": definition.synonym_for,
+        }
+        pid_parts["definition"] = defn
     return pid_parts
 
 
@@ -92,12 +107,19 @@ def get_resolve(
     # Get the raw identifier, i.e. the identifier with any accoutrements
     raw_identifier = request_url[request_url.find(identifier) :]
     pid_parts, definition = pid_config.parse(raw_identifier)
+    # TODO: see above in get_info for PID handling.
     if definition is not None:
+        # We have a match from the definition catalog.
+        # Redirect the response, but include our gathered info in the body
+        # to assist with debugging.
         pid_parts["target"] = definition.target.format(**pid_parts)
         pid_parts["canonical"] = definition.canonical.format(**pid_parts)
         pid_parts["status_code"] = definition.http_code
-        return fastapi.responses.RedirectResponse(
-            pid_parts["target"],
-            status_code=pid_parts["status_code"]
+        headers = {"Location": pid_parts["target"]}
+        return fastapi.responses.JSONResponse(
+            content=pid_parts,
+            headers=headers,
+            status_code=pid_parts.get("status_code", 302)
         )
+    # No match for definition, just return the split PID for now.
     return pid_parts
