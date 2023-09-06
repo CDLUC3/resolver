@@ -1,5 +1,11 @@
 '''
-MicroN2T - General purpose identifier resolver service
+`rslv` - General purpose identifier resolver service
+
+This software is developed with support from the [California Digital Library](https://cdlib.org/).
+
+This software implements a general purpose identifier resolver. Given an identifier string,
+it will parse the identifier, locate a corresponding definition, and either present information
+about the identifier or redirect the user to the registered target.
 '''
 import logging.config
 
@@ -29,7 +35,7 @@ app = fastapi.FastAPI(
     # Need to add this here because adding to the router has no effect.
     lifespan=routers.resolver.resolver_lifespan,
     openapi_url="/api/v1/openapi.json",
-    docs_url="/api"
+    docs_url="/api",
 )
 
 # Enables CORS for UIs on different domains
