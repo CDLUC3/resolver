@@ -55,7 +55,6 @@ def get_info(
         create_pidconfig_repository
     ),
 ):
-    print(engine)
     request_url = str(request.url)
     raw_identifier = request_url[request_url.find(identifier) :]
     pid_parts, definition = pid_config.parse(raw_identifier)
@@ -84,7 +83,7 @@ def get_resolve(
     request_url = str(request.url)
     for check in ("?", "??", "?info"):
         if request_url.endswith(check):
-            return get_info(request, identifier)
+            return get_info(request, identifier, pid_config=pid_config)
     # Get the raw identifier, i.e. the identifier with any accoutrements
     raw_identifier = request_url[request_url.find(identifier) :]
     pid_parts, definition = pid_config.parse(raw_identifier)
@@ -93,4 +92,8 @@ def get_resolve(
         pid_parts["canonical"] = definition.canonical.format(**pid_parts)
         pid_parts["status_code"] = definition.http_code
         pid_parts["properties"] = definition.properties
+        return fastapi.responses.RedirectResponse(
+            pid_parts["target"],
+            status_code=pid_parts["status_code"]
+        )
     return pid_parts
