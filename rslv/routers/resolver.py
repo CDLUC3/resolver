@@ -62,6 +62,7 @@ def get_info(
         pid_parts["target"] = definition.target.format(**pid_parts)
         pid_parts["canonical"] = definition.canonical.format(**pid_parts)
         pid_parts["status_code"] = definition.http_code
+        pid_parts["properties"] = definition.properties
     return pid_parts
 
 
@@ -91,7 +92,6 @@ def get_resolve(
         pid_parts["target"] = definition.target.format(**pid_parts)
         pid_parts["canonical"] = definition.canonical.format(**pid_parts)
         pid_parts["status_code"] = definition.http_code
-        pid_parts["properties"] = definition.properties
         return fastapi.responses.RedirectResponse(
             pid_parts["target"],
             status_code=pid_parts["status_code"]
