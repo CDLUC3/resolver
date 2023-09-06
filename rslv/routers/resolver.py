@@ -43,6 +43,15 @@ router = fastapi.APIRouter(
     # lifespan=resolver_lifespan
 )
 
+def pid_format(parts, template):
+    """Quick hack to avoid "None" appearing in generated string"""
+    _parts = {}
+    for k,v in parts.items():
+        if v is None:
+            v = ""
+        _parts[k] = v
+    return template.format(**_parts)
+
 
 @router.get(
     "/.info/{identifier:path}",
@@ -72,8 +81,8 @@ def get_info(
     #   of a handler, then if set, load the handler and have it process the
     #   rendering of the PID.
     if definition is not None:
-        pid_parts["target"] = definition.target.format(**pid_parts)
-        pid_parts["canonical"] = definition.canonical.format(**pid_parts)
+        pid_parts["target"] = pid_format(pid_parts, definition.target)
+        pid_parts["canonical"] = pid_format(pid_parts, definition.canonical)
         pid_parts["status_code"] = definition.http_code
         pid_parts["properties"] = definition.properties
         defn = {
