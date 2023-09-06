@@ -24,7 +24,7 @@ L = logging.getLogger("resolver")
 
 # Intialize the application
 app = fastapi.FastAPI(
-    title="Micro N2T",
+    title="RSLV",
     description=__doc__,
     version=__version__,
     contact={"name": "Dave Vieglais", "url": "https://github.com/datadavev/"},
