@@ -64,7 +64,8 @@ def get_info(
         create_pidconfig_repository
     ),
 ):
-    if identifier == "":
+    identifier = identifier.lstrip(" /:.;,")
+    if identifier in ("", "{identifier}"):
         schemes = pid_config.list_schemes()
         return {
             "schemes": [s[0] for s in schemes]
