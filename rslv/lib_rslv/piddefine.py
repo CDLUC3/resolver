@@ -308,7 +308,7 @@ class PidDefinitionCatalog:
             entry = self._get(scheme=scheme, prefix=None, value=None)
         if entry is None:
             return None
-        if entry.synonym_for is None:
+        if entry.synonym_for is None or not resolve_synonym:
             return entry
         synonym_parts = rslv.lib_rslv.split_identifier_string(entry.synonym_for)
         _scheme = synonym_parts["scheme"] if synonym_parts["scheme"] is not None else scheme
@@ -334,7 +334,7 @@ class PidDefinitionCatalog:
         self._session.commit()
         return entry.uniq
 
-    def parse(self, pid_str: str):
+    def parse(self, pid_str: str) -> typing.Tuple[dict, typing.Optional[PidDefinition]]:
         parts = rslv.lib_rslv.split_identifier_string(pid_str)
         pid_definition = self.get(
             scheme=parts["scheme"], prefix=parts["prefix"], value=parts["value"]
@@ -344,6 +344,12 @@ class PidDefinitionCatalog:
         if pid_definition.splitter is not None:
             # TODO: implement additional split
             pass
+        # Compute the suffix
+        _content = parts.get("content", None)
+        if _content is not None:
+            pd_value = "" if pid_definition.value is None else pid_definition.value
+            suffix_pos = pid_str.find(_content) + len(f"{pid_definition.prefix}/{pd_value}")
+            parts["suffix"] = pid_str[suffix_pos:]
         return parts, pid_definition
 
 
@@ -351,7 +357,7 @@ def get_session(engine):
     return sqlalchemy.orm.sessionmaker(bind=engine)()
 
 
-def create_database(engine, description):
+def create_database(engine, description:str):
     """
     Executes the DDL to set up the database.
 

@@ -57,6 +57,9 @@ def get_info(
 ):
     request_url = str(request.url)
     raw_identifier = request_url[request_url.find(identifier) :]
+    if raw_identifier.endswith("?info"):
+        raw_identifier = raw_identifier[:-5]
+    raw_identifier = raw_identifier.rstrip("?")
     pid_parts, definition = pid_config.parse(raw_identifier)
     if definition is not None:
         pid_parts["target"] = definition.target.format(**pid_parts)
@@ -84,6 +87,7 @@ def get_resolve(
     request_url = str(request.url)
     for check in ("?", "??", "?info"):
         if request_url.endswith(check):
+            identifier = identifier[:-len(check)]
             return get_info(request, identifier, pid_config=pid_config)
     # Get the raw identifier, i.e. the identifier with any accoutrements
     raw_identifier = request_url[request_url.find(identifier) :]
