@@ -55,6 +55,11 @@ def get_info(
         create_pidconfig_repository
     ),
 ):
+    if identifier == "":
+        schemes = pid_config.list_schemes()
+        return {
+            "schemes": [s[0] for s in schemes]
+        }
     request_url = str(request.url)
     raw_identifier = request_url[request_url.find(identifier) :]
     if raw_identifier.endswith("?info"):
@@ -80,6 +85,12 @@ def get_info(
             "canonical": definition.canonical,
             "synonym_for": definition.synonym_for,
         }
+        if pid_parts["prefix"] == "":
+            prefixes = pid_config.list_prefixes(pid_parts["scheme"])
+            defn["prefixes"] = [p[0] for p in prefixes]
+        elif pid_parts["value"] in ("", None, ):
+            values = pid_config.list_values(pid_parts["scheme"], pid_parts["prefix"])
+            defn["values"] = [v[0] for v in values]
         pid_parts["definition"] = defn
     return pid_parts
 

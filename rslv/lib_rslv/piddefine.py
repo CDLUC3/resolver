@@ -7,8 +7,10 @@ import sqlalchemy.sql.expression
 
 import rslv.lib_rslv
 
+
 def current_time():
     return datetime.datetime.now(tz=datetime.timezone.utc)
+
 
 class Base(sqlorm.DeclarativeBase):
     pass
@@ -58,8 +60,7 @@ class PidDefinition(Base):
         doc="Optional alternate splitter function to use."
     )
     pid_model: sqlorm.Mapped[str] = sqlorm.mapped_column(
-        default="",
-        doc="Identifier class to use for pids matching this definition."
+        default="", doc="Identifier class to use for pids matching this definition."
     )
     # Note we can extend this to support alternate targets based on content negotiation
     # (media-type, profile, etc) by making this a dict and matching request
@@ -99,7 +100,7 @@ class PidDefinition(Base):
     @sqlalchemy.orm.validates("prefix")
     def validate_prefix(self, key, prefix):
         if prefix is None:
-            return ''
+            return ""
         prefix = prefix.strip("/ ")
         if "/" in prefix:
             raise ValueError("'/' is not allowed in prefix.")
@@ -109,34 +110,31 @@ class PidDefinition(Base):
 class ConfigMeta(Base):
     __tablename__ = "piddef_meta"
 
-    key: sqlorm.Mapped[int] = sqlorm.mapped_column(
-        primary_key=True
-    )
+    key: sqlorm.Mapped[int] = sqlorm.mapped_column(primary_key=True)
     created: sqlorm.Mapped[datetime.datetime] = sqlorm.mapped_column(
-        default=current_time,
-        doc="Time when this configuration was created."
+        default=current_time, doc="Time when this configuration was created."
     )
     max_value_length: sqlorm.Mapped[int] = sqlorm.mapped_column(
         doc="Computed maximum length of value entries"
     )
     description: sqlorm.Mapped[str] = sqlorm.mapped_column(
-        nullable=True,
-        doc="Human readable description of this configuration."
+        nullable=True, doc="Human readable description of this configuration."
     )
 
 
 class PidDefinitionCatalog:
     """A repository of identifier configuration details.
-    
+
     This class provides methods for operating on the database containing
     the identifier configuration details.
     """
+
     def __init__(self, session: sqlorm.Session):
         """
-        Initial the config repository instance. 
-               
+        Initial the config repository instance.
+
         Args:
-            session: Returned by engine.connect() 
+            session: Returned by engine.connect()
         """
         self._session = session
         # Cache this value as it is used often. -1 indicates it is unset.
@@ -152,11 +150,7 @@ class PidDefinitionCatalog:
 
         Returns: ConfigMeta record.
         """
-        meta = ConfigMeta(
-            key = 0,
-            max_value_length = 0,
-            description = description
-        )
+        meta = ConfigMeta(key=0, max_value_length=0, description=description)
         self._session.add(meta)
         self._session.commit()
         return meta
@@ -274,7 +268,7 @@ class PidDefinitionCatalog:
         scheme: str,
         prefix: typing.Optional[str] = None,
         value: typing.Optional[str] = None,
-        resolve_synonym: bool = True
+        resolve_synonym: bool = True,
     ) -> typing.Optional[PidDefinition]:
         """
         Return the best matching definition.
@@ -301,9 +295,7 @@ class PidDefinitionCatalog:
         """
         entry = self._get(scheme, prefix=prefix, value=value)
         if entry is None:
-            entry = self._get(
-                scheme=scheme, prefix=prefix, value=None
-            )
+            entry = self._get(scheme=scheme, prefix=prefix, value=None)
         if entry is None:
             entry = self._get(scheme=scheme, prefix=None, value=None)
         if entry is None:
@@ -311,7 +303,9 @@ class PidDefinitionCatalog:
         if entry.synonym_for is None or not resolve_synonym:
             return entry
         synonym_parts = rslv.lib_rslv.split_identifier_string(entry.synonym_for)
-        _scheme = synonym_parts["scheme"] if synonym_parts["scheme"] is not None else scheme
+        _scheme = (
+            synonym_parts["scheme"] if synonym_parts["scheme"] is not None else scheme
+        )
         _prefix = synonym_parts["prefix"] if synonym_parts["prefix"] != "" else prefix
         _value = synonym_parts["value"] if synonym_parts["value"] is not None else value
         return self.get(_scheme, prefix=_prefix, value=_value)
@@ -348,16 +342,52 @@ class PidDefinitionCatalog:
         _content = parts.get("content", None)
         if _content is not None:
             pd_value = "" if pid_definition.value is None else pid_definition.value
-            suffix_pos = pid_str.find(_content) + len(f"{pid_definition.prefix}/{pd_value}")
+            suffix_pos = pid_str.find(_content) + len(
+                f"{pid_definition.prefix}/{pd_value}"
+            )
             parts["suffix"] = pid_str[suffix_pos:]
         return parts, pid_definition
+
+    def list_schemes(self):
+        q = sqlalchemy.select(PidDefinition.scheme).distinct(PidDefinition.scheme)
+        result = self._session.execute(q)
+        return result
+
+    def list_prefixes(self, scheme: str):
+        q = (
+            sqlalchemy.select(PidDefinition.prefix)
+            .distinct(PidDefinition.prefix)
+            .where(
+                sqlalchemy.and_(
+                    PidDefinition.scheme == scheme,
+                    PidDefinition.prefix != ""
+                )
+            )
+        )
+        result = self._session.execute(q)
+        return result
+
+    def list_values(self, scheme: str, prefix: str):
+        q = (
+            sqlalchemy.select(PidDefinition.value)
+            .distinct(PidDefinition.value)
+            .where(
+                sqlalchemy.and_(
+                    PidDefinition.scheme == scheme,
+                    PidDefinition.prefix == prefix,
+                    PidDefinition.value != "",
+                )
+            )
+        )
+        result = self._session.execute(q)
+        return result
 
 
 def get_session(engine):
     return sqlalchemy.orm.sessionmaker(bind=engine)()
 
 
-def create_database(engine, description:str):
+def create_database(engine, description: str):
     """
     Executes the DDL to set up the database.
 

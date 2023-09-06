@@ -77,6 +77,46 @@ def main(ctx, verbosity):
 def initialize_configuration(ctx, description):
     rslv.lib_rslv.piddefine.create_database(ctx.obj["engine"], description)
 
+@main.command("schemes")
+@click.pass_context
+def list_schemes(ctx):
+    session = rslv.lib_rslv.piddefine.get_session(ctx.obj["engine"])
+    try:
+        definitions = rslv.lib_rslv.piddefine.PidDefinitionCatalog(session)
+        schemes = definitions.list_schemes()
+        scheme_list = [s[0] for s in schemes]
+        print(json.dumps(scheme_list, indent=2))
+    finally:
+        session.close()
+
+@main.command("prefixes")
+@click.pass_context
+@click.argument("scheme")
+def list_prefixes(ctx, scheme):
+    session = rslv.lib_rslv.piddefine.get_session(ctx.obj["engine"])
+    try:
+        definitions = rslv.lib_rslv.piddefine.PidDefinitionCatalog(session)
+        prefixes = definitions.list_prefixes(scheme)
+        prefix_list = [p[0] for p in prefixes]
+        print(json.dumps(prefix_list, indent=2))
+    finally:
+        session.close()
+
+
+@main.command("values")
+@click.pass_context
+@click.argument("scheme")
+@click.argument("prefix")
+def list_value(ctx, scheme, prefix):
+    session = rslv.lib_rslv.piddefine.get_session(ctx.obj["engine"])
+    try:
+        definitions = rslv.lib_rslv.piddefine.PidDefinitionCatalog(session)
+        prefixes = definitions.list_values(scheme, prefix)
+        prefix_list = [p[0] for p in prefixes]
+        print(json.dumps(prefix_list, indent=2))
+    finally:
+        session.close()
+
 
 @main.command("add")
 @click.pass_context
@@ -149,6 +189,24 @@ def load_public_naans(ctx, url):
         except Exception as e:
             L.exception(e)
             return
+
+        canonical = "ark:/{prefix}/{value}"
+        try:
+            # Add a base ark: scheme definition.
+            entry = rslv.lib_rslv.piddefine.PidDefinition(
+                scheme="ark",
+                target="/.info/{pid}",
+                canonical=canonical,
+                synonym_for=None,
+                properties = {
+                    "what": "ark",
+                    "name": "Archival Resource Key",
+                }
+            )
+            definitions.add(entry)
+        except Exception as e:
+            L.warning(e)
+            pass
         for naan, record in data.items():
             L.debug("Loading %s", naan)
             properties = record
@@ -157,7 +215,6 @@ def load_public_naans(ctx, url):
                 target = "/.info/{pid}"
             else:
                 target = target.replace("$arkpid", "ark:/{prefix}/{value}")
-            canonical = "ark:/{prefix}/{value}"
             entry = rslv.lib_rslv.piddefine.PidDefinition(
                 scheme="ark",
                 prefix=naan,
