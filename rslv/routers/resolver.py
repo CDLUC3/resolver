@@ -24,10 +24,10 @@ async def resolver_lifespan(app: fastapi.FastAPI):
 
 
 def create_pidconfig_repository() -> (
-    typing.Iterator[rslv.lib_rslv.piddefine.SQLPidConfig]
+    typing.Iterator[rslv.lib_rslv.piddefine.PidDefinitionCatalog]
 ):
     session = sqlalchemy.orm.sessionmaker(bind=engine)()
-    pid_config = rslv.lib_rslv.piddefine.SQLPidConfig(session)
+    pid_config = rslv.lib_rslv.piddefine.PidDefinitionCatalog(session)
     try:
         yield pid_config
     except Exception:
@@ -51,7 +51,7 @@ router = fastapi.APIRouter(
 def get_info(
     request: fastapi.Request,
     identifier: typing.Optional[str] = None,
-    pid_config: rslv.lib_rslv.piddefine.SQLPidConfig = fastapi.Depends(
+    pid_config: rslv.lib_rslv.piddefine.PidDefinitionCatalog = fastapi.Depends(
         create_pidconfig_repository
     ),
 ):
@@ -73,7 +73,7 @@ def get_info(
 def get_resolve(
     request: fastapi.Request,
     identifier: typing.Optional[str] = None,
-    pid_config: rslv.lib_rslv.piddefine.SQLPidConfig = fastapi.Depends(
+    pid_config: rslv.lib_rslv.piddefine.PidDefinitionCatalog = fastapi.Depends(
         create_pidconfig_repository
     ),
 ):
@@ -92,4 +92,5 @@ def get_resolve(
         pid_parts["target"] = definition.target.format(**pid_parts)
         pid_parts["canonical"] = definition.canonical.format(**pid_parts)
         pid_parts["status_code"] = definition.http_code
+        pid_parts["properties"] = definition.properties
     return pid_parts

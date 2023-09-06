@@ -10,7 +10,7 @@ import fastapi.middleware.cors
 
 import routers.resolver
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 URL_SAFE_CHARS = ":/%#?=@[]!$&'()*+,;"
 
 logging.config.fileConfig("logging.conf", disable_existing_loggers=False)

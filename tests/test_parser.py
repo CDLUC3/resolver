@@ -24,7 +24,7 @@ def setup_config():
         print(f"### Added: {result}")
 
     session = get_session()
-    cfg = rslv.lib_rslv.piddefine.SQLPidConfig(session)
+    cfg = rslv.lib_rslv.piddefine.PidDefinitionCatalog(session)
     try:
         do_add(cfg, rslv.lib_rslv.piddefine.PidDefinition(
             scheme="DEFAULT",
@@ -105,7 +105,7 @@ parse_cases = (
 @pytest.mark.parametrize("test,expected", parse_cases)
 def test_parse(test, expected):
     session = get_session()
-    cfg = rslv.lib_rslv.piddefine.SQLPidConfig(session)
+    cfg = rslv.lib_rslv.piddefine.PidDefinitionCatalog(session)
     try:
         parts, definition = cfg.parse(test)
         if expected is None:

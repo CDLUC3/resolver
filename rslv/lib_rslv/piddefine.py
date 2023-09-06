@@ -125,7 +125,7 @@ class ConfigMeta(Base):
     )
 
 
-class SQLPidConfig:
+class PidDefinitionCatalog:
     """A repository of identifier configuration details.
     
     This class provides methods for operating on the database containing
@@ -362,7 +362,7 @@ def create_database(engine, description):
     # See if we need to initialize the metadata
     session = get_session(engine)
     try:
-        cfg = SQLPidConfig(session)
+        cfg = PidDefinitionCatalog(session)
         meta = session.get(ConfigMeta, 0)
         if meta is None:
             cfg.initialize_configuration(description)
