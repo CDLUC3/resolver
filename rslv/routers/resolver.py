@@ -8,14 +8,18 @@ import sqlalchemy.orm
 import rslv.lib_rslv.piddefine
 import rslv.config
 
-engine = None
+ENGINE = None
 settings = rslv.config.settings
 
+def get_engine():
+    global ENGINE
+    if ENGINE is None:
+        ENGINE = sqlalchemy.create_engine(settings.db_connection_string + "?mode=ro", pool_pre_ping=True)
+    return ENGINE
 
 @contextlib.asynccontextmanager
 async def resolver_lifespan(app: fastapi.FastAPI):
-    global engine
-    engine = sqlalchemy.create_engine(settings.db_connection_string, pool_pre_ping=True)
+    engine = get_engine()
     # The pid config database must already exist and be populated.
     # rslv.lib_rslv.pidconfig.create_database(engine)
     yield
@@ -26,6 +30,9 @@ async def resolver_lifespan(app: fastapi.FastAPI):
 def create_pidconfig_repository() -> (
     typing.Iterator[rslv.lib_rslv.piddefine.PidDefinitionCatalog]
 ):
+    # We need to get the engine here to support operation on serverless environments where
+    # the lifespan functionality is generally not supported.
+    engine = get_engine()
     session = sqlalchemy.orm.sessionmaker(bind=engine)()
     pid_config = rslv.lib_rslv.piddefine.PidDefinitionCatalog(session)
     try:

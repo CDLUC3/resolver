@@ -77,6 +77,7 @@ def main(ctx, verbosity):
 def initialize_configuration(ctx, description):
     rslv.lib_rslv.piddefine.create_database(ctx.obj["engine"], description)
 
+
 @main.command("schemes")
 @click.pass_context
 def list_schemes(ctx):
@@ -88,6 +89,7 @@ def list_schemes(ctx):
         print(json.dumps(scheme_list, indent=2))
     finally:
         session.close()
+
 
 @main.command("prefixes")
 @click.pass_context
@@ -132,7 +134,10 @@ def list_value(ctx, scheme, prefix):
     help="Pattern for creation of canonical values",
     default="{pid}",
 )
-def add_entry(ctx, scheme, prefix, value, target, canonical):
+@click.option(
+    "-y", "--synonym", default=None, help="This entry is a synonym for this uniq value."
+)
+def add_entry(ctx, scheme, prefix, value, target, canonical, synonym):
     session = rslv.lib_rslv.piddefine.get_session(ctx.obj["engine"])
     try:
         definitions = rslv.lib_rslv.piddefine.PidDefinitionCatalog(session)
@@ -142,6 +147,7 @@ def add_entry(ctx, scheme, prefix, value, target, canonical):
             value=value,
             target=target,
             canonical=canonical,
+            synonym_for=synonym,
         )
         result = definitions.add(entry)
         definitions.refresh_metadata()
@@ -198,10 +204,10 @@ def load_public_naans(ctx, url):
                 target="/.info/{pid}",
                 canonical=canonical,
                 synonym_for=None,
-                properties = {
+                properties={
                     "what": "ark",
                     "name": "Archival Resource Key",
-                }
+                },
             )
             definitions.add(entry)
         except Exception as e:
@@ -252,19 +258,19 @@ def load_naan_shoulders(ctx, source):
             parts = rslv.lib_rslv.split_identifier_string(entry.get("id", ""))
             if parts["value"] is None or parts["scheme"] != "ark":
                 continue
-            target = entry.get('nma_url',None)
+            target = entry.get("nma_url", None)
             if len(target) < 1:
                 continue
             target = target[0] + "{pid}"
             print(json.dumps(entry))
             definition = rslv.lib_rslv.piddefine.PidDefinition(
-                scheme = parts["scheme"],
-                prefix = parts["prefix"],
-                value = parts["value"],
-                target = target,
-                properties = entry,
+                scheme=parts["scheme"],
+                prefix=parts["prefix"],
+                value=parts["value"],
+                target=target,
+                properties=entry,
                 canonical=canonical,
-                synonym_for=None
+                synonym_for=None,
             )
             L.info("Saving entry for: %s", entry["id"])
             definitions.add(definition)
