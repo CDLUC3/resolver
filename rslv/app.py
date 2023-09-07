@@ -9,17 +9,16 @@ about the identifier or redirect the user to the registered target.
 '''
 import logging.config
 
-import config
+import rslv.config
 import fastapi
 import fastapi.responses
 import fastapi.middleware.cors
 
-import routers.resolver
+import rslv.routers.resolver
 
-__version__ = "0.2.0"
-URL_SAFE_CHARS = ":/%#?=@[]!$&'()*+,;"
+__version__ = "0.3.0"
 
-logging.config.fileConfig("logging.conf", disable_existing_loggers=False)
+logging.config.fileConfig("rslv/logging.conf", disable_existing_loggers=False)
 L = logging.getLogger("resolver")
 
 # Intialize the application
@@ -33,7 +32,7 @@ app = fastapi.FastAPI(
         "url": "https://opensource.org/license/mit/",
     },
     # Need to add this here because adding to the router has no effect.
-    lifespan=routers.resolver.resolver_lifespan,
+    lifespan=rslv.routers.resolver.resolver_lifespan,
     openapi_url="/api/v1/openapi.json",
     docs_url="/api",
 )
@@ -60,16 +59,23 @@ app.add_middleware(
     include_in_schema=False
 )
 async def redirect_docs():
-    return fastapi.responses.RedirectResponse(url='/docs')
+    return fastapi.responses.RedirectResponse(url='/api')
+
+@app.get(
+    "/favicon.ico",
+    include_in_schema=False
+)
+async def get_favicon():
+    raise fastapi.HTTPException(status_code=404, detail="Not found")
 
 
-app.include_router(routers.resolver.router)
+app.include_router(rslv.routers.resolver.router)
 
 
 if __name__ == "__main__":
     try:
         import uvicorn
-        uvicorn.run("app:app", port=config.settings.port, host=config.settings.host)
+        uvicorn.run("app:app", port=rslv.config.settings.port, host=rslv.config.settings.host, reload=True)
     except ImportError as e:
         print("Unable to run as uvicorn is not available.")
         print(e)
