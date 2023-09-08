@@ -8,14 +8,19 @@ import sqlalchemy.orm
 import rslv.lib_rslv.piddefine
 import rslv.config
 
-ENGINE = None
 settings = rslv.config.settings
+
+ENGINE = None
+
 
 def get_engine():
     global ENGINE
     if ENGINE is None:
-        ENGINE = sqlalchemy.create_engine(settings.db_connection_string + "?mode=ro", pool_pre_ping=True)
+        ENGINE = sqlalchemy.create_engine(
+            settings.db_connection_string + "?mode=ro", pool_pre_ping=True
+        )
     return ENGINE
+
 
 @contextlib.asynccontextmanager
 async def resolver_lifespan(app: fastapi.FastAPI):
@@ -50,14 +55,33 @@ router = fastapi.APIRouter(
     # lifespan=resolver_lifespan
 )
 
+
 def pid_format(parts, template):
     """Quick hack to avoid "None" appearing in generated string"""
     _parts = {}
-    for k,v in parts.items():
+    for k, v in parts.items():
         if v is None:
             v = ""
         _parts[k] = v
     return template.format(**_parts)
+
+
+@router.get(
+    "/.info",
+    summary="Retrieve information about the service.",
+)
+def get_service_info(
+    request: fastapi.Request,
+    pid_config: rslv.lib_rslv.piddefine.PidDefinitionCatalog = fastapi.Depends(
+        create_pidconfig_repository
+    ),
+):
+    schemes = pid_config.list_schemes()
+    return {
+        "about": pid_config.get_metadata(),
+        "api": "/api",
+        "schemes": [s[0] for s in schemes],
+    }
 
 
 @router.get(
@@ -73,10 +97,7 @@ def get_info(
 ):
     identifier = identifier.lstrip(" /:.;,")
     if identifier in ("", "{identifier}"):
-        schemes = pid_config.list_schemes()
-        return {
-            "schemes": [s[0] for s in schemes]
-        }
+        return get_service_info(request, pid_config=pid_config)
     request_url = str(request.url)
     raw_identifier = request_url[request_url.find(identifier) :]
     if raw_identifier.endswith("?info"):
@@ -105,11 +126,16 @@ def get_info(
         if pid_parts["prefix"] == "":
             prefixes = pid_config.list_prefixes(pid_parts["scheme"])
             defn["prefixes"] = [p[0] for p in prefixes]
-        elif pid_parts["value"] in ("", None, ):
+        elif pid_parts["value"] in (
+            "",
+            None,
+        ):
             values = pid_config.list_values(pid_parts["scheme"], pid_parts["prefix"])
             defn["values"] = [v[0] for v in values]
         pid_parts["definition"] = defn
     return pid_parts
+
+
 
 
 @router.get(
@@ -130,7 +156,7 @@ def get_resolve(
     request_url = str(request.url)
     for check in ("?", "??", "?info"):
         if request_url.endswith(check):
-            identifier = identifier[:-len(check)]
+            identifier = identifier[: -len(check)]
             return get_info(request, identifier, pid_config=pid_config)
     # Get the raw identifier, i.e. the identifier with any accoutrements
     raw_identifier = request_url[request_url.find(identifier) :]
@@ -147,7 +173,7 @@ def get_resolve(
         return fastapi.responses.JSONResponse(
             content=pid_parts,
             headers=headers,
-            status_code=pid_parts.get("status_code", 302)
+            status_code=pid_parts.get("status_code", 302),
         )
     # No match for definition, just return the split PID for now.
     return pid_parts

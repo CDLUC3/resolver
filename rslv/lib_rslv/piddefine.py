@@ -173,6 +173,13 @@ class PidDefinitionCatalog:
         self._cached_max_len = result
         self._session.commit()
 
+    def get_metadata(self) -> dict:
+        meta = self._session.get(ConfigMeta, 0)
+        return {
+            "description": meta.description,
+            "created": meta.created.isoformat()
+        }
+
     def get_max_value_length(self) -> int:
         if self._cached_max_len > 0:
             return self._cached_max_len
@@ -359,8 +366,7 @@ class PidDefinitionCatalog:
             .distinct(PidDefinition.prefix)
             .where(
                 sqlalchemy.and_(
-                    PidDefinition.scheme == scheme,
-                    PidDefinition.prefix != ""
+                    PidDefinition.scheme == scheme, PidDefinition.prefix != ""
                 )
             )
         )
