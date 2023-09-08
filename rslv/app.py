@@ -1,4 +1,4 @@
-'''
+"""
 `rslv` - General purpose identifier resolver service
 
 This software is developed with support from the [California Digital Library](https://cdlib.org/).
@@ -6,13 +6,16 @@ This software is developed with support from the [California Digital Library](ht
 This software implements a general purpose identifier resolver. Given an identifier string,
 it will parse the identifier, locate a corresponding definition, and either present information
 about the identifier or redirect the user to the registered target.
-'''
+"""
 import logging.config
+import os
 
 import rslv.config
 import fastapi
 import fastapi.responses
 import fastapi.middleware.cors
+import fastapi.staticfiles
+import fastapi.templating
 
 import rslv.routers.resolver
 
@@ -54,17 +57,24 @@ app.add_middleware(
 )
 
 
-@app.get(
-    "/",
-    include_in_schema=False
+# static files and templates
+app.mount(
+    "/static",
+    fastapi.staticfiles.StaticFiles(directory=rslv.config.settings.static_dir),
+    name="static",
 )
-async def redirect_docs():
-    return fastapi.responses.RedirectResponse(url='/api')
+templates = fastapi.templating.Jinja2Templates(
+    directory=rslv.config.settings.template_dir
+)
 
-@app.get(
-    "/favicon.ico",
-    include_in_schema=False
-)
+
+@app.get("/", include_in_schema=False)
+async def redirect_docs(request:fastapi.Request):
+    return templates.TemplateResponse("index.html", {"request": request})
+    #return fastapi.responses.RedirectResponse(url="/api")
+
+
+@app.get("/favicon.ico", include_in_schema=False)
 async def get_favicon():
     raise fastapi.HTTPException(status_code=404, detail="Not found")
 
@@ -75,7 +85,13 @@ app.include_router(rslv.routers.resolver.router)
 if __name__ == "__main__":
     try:
         import uvicorn
-        uvicorn.run("app:app", port=rslv.config.settings.port, host=rslv.config.settings.host, reload=True)
+
+        uvicorn.run(
+            "app:app",
+            port=rslv.config.settings.port,
+            host=rslv.config.settings.host,
+            reload=True,
+        )
     except ImportError as e:
         print("Unable to run as uvicorn is not available.")
         print(e)
