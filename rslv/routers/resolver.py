@@ -133,7 +133,11 @@ def get_info(
             values = pid_config.list_values(pid_parts["scheme"], pid_parts["prefix"])
             defn["values"] = [v[0] for v in values]
         pid_parts["definition"] = defn
-    return pid_parts
+    pid_parts["error"] = f"No match was found for {raw_identifier}"
+    return fastapi.responses.JSONResponse(
+        content=pid_parts,
+        status_code=404
+    )
 
 
 
@@ -175,5 +179,10 @@ def get_resolve(
             headers=headers,
             status_code=pid_parts.get("status_code", 302),
         )
-    # No match for definition, just return the split PID for now.
-    return pid_parts
+    # Return a 404 response and include the pid parts in the body with a
+    # message indicating not found
+    pid_parts["error"] = f"No match was found for {raw_identifier}"
+    return fastapi.responses.JSONResponse(
+        content=pid_parts,
+        status_code=404
+    )
