@@ -133,6 +133,7 @@ def get_info(
             values = pid_config.list_values(pid_parts["scheme"], pid_parts["prefix"])
             defn["values"] = [v[0] for v in values]
         pid_parts["definition"] = defn
+        return pid_parts
     pid_parts["error"] = f"No match was found for {raw_identifier}"
     return fastapi.responses.JSONResponse(
         content=pid_parts,
