@@ -18,6 +18,10 @@ pytest = "^7"
 requests = "^2.31.0"
 uvicorn = {extras = ["standard"], version = "^0.23.2"}
 
+[tool.poetry.scripts]
+rslv = "rslv.manage:main"
+crne = "scripts.crne:main"
+compare_ezid_n2t_naans = "scripts.compare_ezid_n2t_naans:main"
 
 [tool.poetry.group.cli.dependencies]
 click = "^8.1.7"

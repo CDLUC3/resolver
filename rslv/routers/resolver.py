@@ -141,8 +141,6 @@ def get_info(
     )
 
 
-
-
 @router.get(
     "/{identifier:path}",
     summary="Redirect to the identified resource or present resolver information.",

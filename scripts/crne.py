@@ -1,3 +1,11 @@
+"""
+Script for comparing resolved target for an ARK when using rslv, n2t, and ezid.
+
+This is for diagnostic purposes to help ensure appropriate configuration
+of rslv for ARK identifier resolution.
+
+See also: https://hopper.rslv.xyz/ for viewing the redirect hops.
+"""
 import asyncio
 import json
 import logging
@@ -36,6 +44,12 @@ async def do_work(ark):
 @click.argument("ark")
 def main(ark:str):
     results = asyncio.run(do_work(ark))
+    results = {
+        "input": ark,
+        "N2T": results[0],
+        "RSLV": results[1],
+        "EZID": results[2]
+    }
     print(json.dumps(results, indent=2))
 
 
