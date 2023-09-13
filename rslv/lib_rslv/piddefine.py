@@ -1,5 +1,6 @@
 import datetime
 import typing
+import pydantic
 import sqlalchemy as sqla
 import sqlalchemy.orm as sqlorm
 import sqlalchemy.types
@@ -31,7 +32,7 @@ def default_definition_uniq(context):
     return f"{s}:{p}"
 
 
-class PidDefinition(Base):
+class PidDefinitionSQL(Base):
     """Defines a database record that contains configuration for a
     particular combination of scheme:prefix/value.
 
@@ -107,6 +108,26 @@ class PidDefinition(Base):
         return prefix
 
 
+class PidDefinition(pydantic.BaseModel):
+    """
+    Defines a PID definition record representation that exists outside
+    of the repository. Repository entries should use this model for
+    transfer to other uses.
+    """
+    scheme: str
+    prefix: typing.Optional[str] = ""
+    value: typing.Optional[str] = ""
+    #if not set, is computed by the sql model
+    uniq: typing.Optional[str] = None
+    splitter: typing.Optional[str] = None
+    pid_model: typing.Optional[str] = None
+    target: str = "{pid}"
+    http_code: int = 302
+    canonical: str = "{pid}"
+    synonym_for: typing.Optional[str] = None
+    properties: typing.Optional[dict[str, typing.Any]] = None
+
+
 class ConfigMeta(Base):
     __tablename__ = "piddef_meta"
 
@@ -164,7 +185,7 @@ class PidDefinitionCatalog:
         """
         max_len_q = sqlalchemy.select(
             sqlalchemy.sql.expression.func.max(
-                sqlalchemy.sql.expression.func.char_length(PidDefinition.value)
+                sqlalchemy.sql.expression.func.char_length(PidDefinitionSQL.value)
             )
         )
         result = self._session.execute(max_len_q).fetchone()[0]
@@ -187,7 +208,7 @@ class PidDefinitionCatalog:
         self._cached_max_len = meta.max_value_length
         return self._cached_max_len
 
-    def get_by_uniq(self, uniq: str) -> typing.Optional[PidDefinition]:
+    def get_by_uniq(self, uniq: str) -> typing.Optional[PidDefinitionSQL]:
         """
         Returns the definition matching the uniq value.
 
@@ -200,9 +221,9 @@ class PidDefinitionCatalog:
             uniq: (str) The uniq value to match (scheme:prefix/value)
 
         Returns:
-            PidDefinition if found, otherwise None
+            PidDefinitionSQL if found, otherwise None
         """
-        q = sqlalchemy.select(PidDefinition).where(PidDefinition.uniq == uniq)
+        q = sqlalchemy.select(PidDefinitionSQL).where(PidDefinitionSQL.uniq == uniq)
         result = self._session.execute(q)
         try:
             return result.fetchone()[0]
@@ -215,14 +236,14 @@ class PidDefinitionCatalog:
         scheme: str,
         prefix: typing.Optional[str] = None,
         value: typing.Optional[str] = None,
-    ) -> typing.Optional[PidDefinition]:
+    ) -> typing.Optional[PidDefinitionSQL]:
         # scheme and prefix are exact matches
         if (value is None or value == "") and (prefix is None or prefix == ""):
-            q = sqlalchemy.select(PidDefinition).where(
+            q = sqlalchemy.select(PidDefinitionSQL).where(
                 sqlalchemy.and_(
-                    PidDefinition.scheme == scheme,
-                    PidDefinition.prefix == "",
-                    PidDefinition.value == "",
+                    PidDefinitionSQL.scheme == scheme,
+                    PidDefinitionSQL.prefix == "",
+                    PidDefinitionSQL.value == "",
                 ),
             )
             result = self._session.execute(q)
@@ -232,11 +253,11 @@ class PidDefinitionCatalog:
                 pass
             return None
         if value is None or value == "":
-            q = sqlalchemy.select(PidDefinition).where(
+            q = sqlalchemy.select(PidDefinitionSQL).where(
                 sqlalchemy.and_(
-                    PidDefinition.scheme == scheme,
-                    PidDefinition.prefix == prefix,
-                    PidDefinition.value == "",
+                    PidDefinitionSQL.scheme == scheme,
+                    PidDefinitionSQL.prefix == prefix,
+                    PidDefinitionSQL.value == "",
                 ),
             )
             result = self._session.execute(q)
@@ -251,16 +272,16 @@ class PidDefinitionCatalog:
         for i in range(in_length_max, 1, -1):
             in_values.append(value[:i])
         q = (
-            sqlalchemy.select(PidDefinition)
+            sqlalchemy.select(PidDefinitionSQL)
             .where(
                 sqlalchemy.and_(
-                    PidDefinition.scheme == scheme,
-                    PidDefinition.prefix == prefix,
-                    PidDefinition.value.in_(in_values),
+                    PidDefinitionSQL.scheme == scheme,
+                    PidDefinitionSQL.prefix == prefix,
+                    PidDefinitionSQL.value.in_(in_values),
                 )
             )
             .order_by(
-                sqlalchemy.sql.expression.func.char_length(PidDefinition.value).desc()
+                sqlalchemy.sql.expression.func.char_length(PidDefinitionSQL.value).desc()
             )
         )
         result = self._session.execute(q)
@@ -276,7 +297,7 @@ class PidDefinitionCatalog:
         prefix: typing.Optional[str] = None,
         value: typing.Optional[str] = None,
         resolve_synonym: bool = True,
-    ) -> typing.Optional[PidDefinition]:
+    ) -> typing.Optional[PidDefinitionSQL]:
         """
         Return the best matching definition.
 
@@ -298,7 +319,7 @@ class PidDefinitionCatalog:
             resolve_synonym: (bool) If return the synonym target.
 
         Returns:
-            Matching PidDefinition or None if not match.
+            Matching PidDefinitionSQL or None if not match.
         """
         entry = self._get(scheme, prefix=prefix, value=value)
         if entry is None:
@@ -317,7 +338,55 @@ class PidDefinitionCatalog:
         _value = synonym_parts["value"] if synonym_parts["value"] is not None else value
         return self.get(_scheme, prefix=_prefix, value=_value)
 
-    def add(self, entry: PidDefinition) -> str:
+    def get_as_definition(
+        self,
+        uniq: typing.Optional[str] = None,
+        scheme: typing.Optional[str] = None,
+        prefix: typing.Optional[str] = None,
+        value: typing.Optional[str] = None
+    ) -> typing.Optional[PidDefinition]:
+        """
+        Returns an instance of PidDefinition if a match can be found.
+
+        If uniq is set, then other arguments are ignored. If uniq is
+        not set, then at least scheme must be set.
+
+        This method does not reconcile synonyms. That must be done by
+        the caller by checking the returned object to see if it is
+        a synonym for another entry.
+
+        Args:
+            uniq:
+            scheme:
+            prefix:
+            value:
+
+        Returns:
+            PidDefinition
+        """
+        record = None
+        if uniq is not None:
+            record = self.get_by_uniq(uniq)
+        else:
+            if scheme is None:
+                raise ValueError("uniq or scheme must be set")
+            record = self.get(scheme, prefix=prefix, value=value, resolve_synonym=False)
+        if record is None:
+            return None
+        return PidDefinition(
+            scheme=record.scheme,
+            prefix=record.prefix,
+            value=record.value,
+            splitter=record.splitter,
+            pid_model=record.pid_model,
+            target=record.target,
+            http_code=record.http_code,
+            canonical=record.canonical,
+            synonym_for=record.synonym_for,
+            properties=record.properties
+        )
+
+    def add(self, entry: PidDefinitionSQL) -> str:
         """
         Add an entry to the repository database.
 
@@ -325,7 +394,7 @@ class PidDefinitionCatalog:
         UniqueConstraint exception.
 
         Args:
-            entry: A populated PidDefinition for storing in the database.
+            entry: A populated PidDefinitionSQL for storing in the database.
 
         Returns:
             str: The computed unique value
@@ -335,7 +404,21 @@ class PidDefinitionCatalog:
         self._session.commit()
         return entry.uniq
 
-    def parse(self, pid_str: str) -> typing.Tuple[dict, typing.Optional[PidDefinition]]:
+    def add_as_definition(self, entry:PidDefinition) -> str:
+        entry = PidDefinitionSQL(
+            uniq=entry.uniq,
+            scheme=entry.scheme,
+            prefix=entry.prefix,
+            value=entry.value,
+            splitter=entry.splitter,
+            pid_model=entry.pid_model,
+            target=entry.target,
+            http_code=entry.http_code,
+            canonical=entry.canonical
+        )
+        pass
+
+    def parse(self, pid_str: str) -> typing.Tuple[dict, typing.Optional[PidDefinitionSQL]]:
         parts = rslv.lib_rslv.split_identifier_string(pid_str)
         pid_definition = self.get(
             scheme=parts["scheme"], prefix=parts["prefix"], value=parts["value"]
@@ -356,17 +439,17 @@ class PidDefinitionCatalog:
         return parts, pid_definition
 
     def list_schemes(self):
-        q = sqlalchemy.select(PidDefinition.scheme).distinct(PidDefinition.scheme)
+        q = sqlalchemy.select(PidDefinitionSQL.scheme).distinct(PidDefinitionSQL.scheme)
         result = self._session.execute(q)
         return result
 
     def list_prefixes(self, scheme: str):
         q = (
-            sqlalchemy.select(PidDefinition.prefix)
-            .distinct(PidDefinition.prefix)
+            sqlalchemy.select(PidDefinitionSQL.prefix)
+            .distinct(PidDefinitionSQL.prefix)
             .where(
                 sqlalchemy.and_(
-                    PidDefinition.scheme == scheme, PidDefinition.prefix != ""
+                    PidDefinitionSQL.scheme == scheme, PidDefinitionSQL.prefix != ""
                 )
             )
         )
@@ -375,13 +458,13 @@ class PidDefinitionCatalog:
 
     def list_values(self, scheme: str, prefix: str):
         q = (
-            sqlalchemy.select(PidDefinition.value)
-            .distinct(PidDefinition.value)
+            sqlalchemy.select(PidDefinitionSQL.value)
+            .distinct(PidDefinitionSQL.value)
             .where(
                 sqlalchemy.and_(
-                    PidDefinition.scheme == scheme,
-                    PidDefinition.prefix == prefix,
-                    PidDefinition.value != "",
+                    PidDefinitionSQL.scheme == scheme,
+                    PidDefinitionSQL.prefix == prefix,
+                    PidDefinitionSQL.value != "",
                 )
             )
         )

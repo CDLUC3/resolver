@@ -1,6 +1,7 @@
 """
 Script for basic management of the pid configuration sqlite instance.
 """
+import dataclasses
 import json
 import logging
 import logging.config
@@ -76,6 +77,7 @@ def main(ctx, verbosity):
 @click.pass_context
 @click.argument("description")
 def initialize_configuration(ctx, description):
+    os.makedirs(os.path.join(rslv.config.BASE_FOLDER, "data"), exist_ok=True)
     rslv.lib_rslv.piddefine.create_database(ctx.obj["engine"], description)
 
 
@@ -142,7 +144,7 @@ def add_entry(ctx, scheme, prefix, value, target, canonical, synonym):
     session = rslv.lib_rslv.piddefine.get_session(ctx.obj["engine"])
     try:
         definitions = rslv.lib_rslv.piddefine.PidDefinitionCatalog(session)
-        entry = rslv.lib_rslv.piddefine.PidDefinition(
+        entry = rslv.lib_rslv.piddefine.PidDefinitionSQL(
             scheme=scheme,
             prefix=prefix,
             value=value,
@@ -153,6 +155,24 @@ def add_entry(ctx, scheme, prefix, value, target, canonical, synonym):
         result = definitions.add(entry)
         definitions.refresh_metadata()
         print(result)
+    finally:
+        session.close()
+
+
+@main.command("get")
+@click.pass_context
+@click.argument("uniq")
+def get_entry(ctx, uniq):
+    session = rslv.lib_rslv.piddefine.get_session(ctx.obj["engine"])
+    try:
+        definitions = rslv.lib_rslv.piddefine.PidDefinitionCatalog(session)
+        entry = definitions.get_by_uniq(uniq)
+        print(entry)
+        if entry is not None:
+            record = dataclasses.asdict(entry)
+        else:
+            record = None
+        print(json.dumps(record, indent=2))
     finally:
         session.close()
 
@@ -215,7 +235,7 @@ def load_public_naans(ctx, url, ezid_naans):
         canonical = "ark:/{prefix}/{value}"
         try:
             # Add a base ark: scheme definition.
-            entry = rslv.lib_rslv.piddefine.PidDefinition(
+            entry = rslv.lib_rslv.piddefine.PidDefinitionSQL(
                 scheme="ark",
                 target="/.info/{pid}",
                 canonical=canonical,
@@ -245,7 +265,7 @@ def load_public_naans(ctx, url, ezid_naans):
                 else:
                     L.debug("NAAN: %s", naan)
                     target = target.replace("$arkpid", "ark:/{prefix}/{value}")
-            entry = rslv.lib_rslv.piddefine.PidDefinition(
+            entry = rslv.lib_rslv.piddefine.PidDefinitionSQL(
                 scheme="ark",
                 prefix=naan,
                 value=None,
@@ -287,7 +307,7 @@ def load_naan_shoulders(ctx, source):
                 continue
             target = target[0] + "{pid}"
             print(json.dumps(entry))
-            definition = rslv.lib_rslv.piddefine.PidDefinition(
+            definition = rslv.lib_rslv.piddefine.PidDefinitionSQL(
                 scheme=parts["scheme"],
                 prefix=parts["prefix"],
                 value=parts["value"],
