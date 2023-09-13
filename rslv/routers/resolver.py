@@ -2,6 +2,7 @@
 """
 import contextlib
 import typing
+import urllib.parse
 import fastapi
 import sqlalchemy
 import sqlalchemy.orm
@@ -69,6 +70,7 @@ def pid_format(parts, template):
 @router.get(
     "/.info",
     summary="Retrieve information about the service.",
+    response_class=rslv.routers.PrettyJSONResponse
 )
 def get_service_info(
     request: fastapi.Request,
@@ -87,6 +89,7 @@ def get_service_info(
 @router.get(
     "/.info/{identifier:path}",
     summary="Retrieve information about the provided identifier.",
+    response_class=rslv.routers.PrettyJSONResponse
 )
 def get_info(
     request: fastapi.Request,
@@ -95,10 +98,12 @@ def get_info(
         create_pidconfig_repository
     ),
 ):
+    identifier = urllib.parse.unquote(identifier)
     identifier = identifier.lstrip(" /:.;,")
     if identifier in ("", "{identifier}"):
         return get_service_info(request, pid_config=pid_config)
     request_url = str(request.url)
+    request_url = urllib.parse.unquote(request_url)
     raw_identifier = request_url[request_url.find(identifier) :]
     if raw_identifier.endswith("?info"):
         raw_identifier = raw_identifier[:-5]
@@ -144,6 +149,7 @@ def get_info(
 @router.get(
     "/{identifier:path}",
     summary="Redirect to the identified resource or present resolver information.",
+    response_class=rslv.routers.PrettyJSONResponse
 )
 def get_resolve(
     request: fastapi.Request,
@@ -162,6 +168,8 @@ def get_resolve(
             identifier = identifier[: -len(check)]
             return get_info(request, identifier, pid_config=pid_config)
     # Get the raw identifier, i.e. the identifier with any accoutrements
+    identifier = urllib.parse.unquote(identifier)
+    request_url = urllib.parse.unquote(request_url)
     raw_identifier = request_url[request_url.find(identifier) :]
     pid_parts, definition = pid_config.parse(raw_identifier)
     # TODO: see above in get_info for PID handling.
