@@ -26,32 +26,32 @@ def setup_config():
     session = get_session()
     cfg = rslv.lib_rslv.piddefine.PidDefinitionCatalog(session)
     try:
-        do_add(cfg, rslv.lib_rslv.piddefine.PidDefinition(
+        do_add(cfg, rslv.lib_rslv.piddefine.PidDefinitionSQL(
             scheme="DEFAULT",
         ))
-        do_add(cfg, rslv.lib_rslv.piddefine.PidDefinition(
+        do_add(cfg, rslv.lib_rslv.piddefine.PidDefinitionSQL(
             scheme="ark",
         ))
-        do_add(cfg, rslv.lib_rslv.piddefine.PidDefinition(
+        do_add(cfg, rslv.lib_rslv.piddefine.PidDefinitionSQL(
             scheme="ark",
             prefix="99999",
         ))
-        do_add(cfg, rslv.lib_rslv.piddefine.PidDefinition(
+        do_add(cfg, rslv.lib_rslv.piddefine.PidDefinitionSQL(
             scheme="ark",
             prefix="99999",
             value="fk4"
         ))
-        do_add(cfg, rslv.lib_rslv.piddefine.PidDefinition(
+        do_add(cfg, rslv.lib_rslv.piddefine.PidDefinitionSQL(
             scheme="ark",
             prefix="99999",
             value="fk"
         ))
-        do_add(cfg, rslv.lib_rslv.piddefine.PidDefinition(
+        do_add(cfg, rslv.lib_rslv.piddefine.PidDefinitionSQL(
             scheme="ark",
             prefix="example",
             synonym_for="ark:99999"
         ))
-        do_add(cfg, rslv.lib_rslv.piddefine.PidDefinition(
+        do_add(cfg, rslv.lib_rslv.piddefine.PidDefinitionSQL(
             scheme="bark",
             synonym_for="ark:"
         ))
