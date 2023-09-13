@@ -1,0 +1,4 @@
+fastapi
+pydantic-settings
+sqlalchemy
+jinja2
