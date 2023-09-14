@@ -166,13 +166,11 @@ def get_entry(ctx, uniq):
     session = rslv.lib_rslv.piddefine.get_session(ctx.obj["engine"])
     try:
         definitions = rslv.lib_rslv.piddefine.PidDefinitionCatalog(session)
-        entry = definitions.get_by_uniq(uniq)
-        print(entry)
-        if entry is not None:
-            record = dataclasses.asdict(entry)
+        entry = definitions.get_as_definition(uniq=uniq)
+        if entry is None:
+            print(json.dumps(None))
         else:
-            record = None
-        print(json.dumps(record, indent=2))
+            print(entry.model_dump_json(indent=2))
     finally:
         session.close()
 
