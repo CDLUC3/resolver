@@ -377,6 +377,7 @@ class PidDefinitionCatalog:
             scheme=record.scheme,
             prefix=record.prefix,
             value=record.value,
+            uniq=record.uniq,
             splitter=record.splitter,
             pid_model=record.pid_model,
             target=record.target,
@@ -416,7 +417,7 @@ class PidDefinitionCatalog:
             http_code=entry.http_code,
             canonical=entry.canonical
         )
-        pass
+        return self.add(entry)
 
     def parse(self, pid_str: str) -> typing.Tuple[dict, typing.Optional[PidDefinitionSQL]]:
         parts = rslv.lib_rslv.split_identifier_string(pid_str)
