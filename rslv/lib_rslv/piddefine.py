@@ -208,6 +208,22 @@ class PidDefinitionCatalog:
         self._cached_max_len = meta.max_value_length
         return self._cached_max_len
 
+    @classmethod
+    def sqldefinition_to_definition(cls, sql_def: PidDefinitionSQL) -> PidDefinition:
+        return PidDefinition(
+            scheme=sql_def.scheme,
+            prefix=sql_def.prefix,
+            value=sql_def.value,
+            uniq=sql_def.uniq,
+            splitter=sql_def.splitter,
+            pid_model=sql_def.pid_model,
+            target=sql_def.target,
+            http_code=sql_def.http_code,
+            canonical=sql_def.canonical,
+            synonym_for=sql_def.synonym_for,
+            properties=sql_def.properties
+        )
+
     def get_by_uniq(self, uniq: str) -> typing.Optional[PidDefinitionSQL]:
         """
         Returns the definition matching the uniq value.
@@ -230,6 +246,12 @@ class PidDefinitionCatalog:
         except TypeError:
             pass
         return None
+
+    def get_definition_by_uniq(self, uniq: str) -> typing.Optional[PidDefinition]:
+        record = self.get_by_uniq(uniq)
+        if record is None:
+            return None
+        return PidDefinitionCatalog.sqldefinition_to_definition(record)
 
     def _get(
         self,
@@ -321,6 +343,10 @@ class PidDefinitionCatalog:
         Returns:
             Matching PidDefinitionSQL or None if not match.
         """
+        # TODO: See if there is an alternate splitter for the scheme
+        #       if so, then should re-split the pid with the alternate
+        #       splitter and handle things like ignored chars
+        #       (e.g. "-" in ARKs)
         entry = self._get(scheme, prefix=prefix, value=value)
         if entry is None:
             entry = self._get(scheme=scheme, prefix=prefix, value=None)
@@ -340,10 +366,8 @@ class PidDefinitionCatalog:
 
     def get_as_definition(
         self,
-        uniq: typing.Optional[str] = None,
-        scheme: typing.Optional[str] = None,
-        prefix: typing.Optional[str] = None,
-        value: typing.Optional[str] = None
+        pid:rslv.lib_rslv.ParsedPID,
+        resolve_synonym: bool = True
     ) -> typing.Optional[PidDefinition]:
         """
         Returns an instance of PidDefinition if a match can be found.
@@ -364,28 +388,10 @@ class PidDefinitionCatalog:
         Returns:
             PidDefinition
         """
-        record = None
-        if uniq is not None:
-            record = self.get_by_uniq(uniq)
-        else:
-            if scheme is None:
-                raise ValueError("uniq or scheme must be set")
-            record = self.get(scheme, prefix=prefix, value=value, resolve_synonym=False)
+        record = self.get(pid.scheme, prefix=pid.prefix, value=pid.clean_value, resolve_synonym=resolve_synonym)
         if record is None:
             return None
-        return PidDefinition(
-            scheme=record.scheme,
-            prefix=record.prefix,
-            value=record.value,
-            uniq=record.uniq,
-            splitter=record.splitter,
-            pid_model=record.pid_model,
-            target=record.target,
-            http_code=record.http_code,
-            canonical=record.canonical,
-            synonym_for=record.synonym_for,
-            properties=record.properties
-        )
+        return PidDefinitionCatalog.sqldefinition_to_definition(record)
 
     def add(self, entry: PidDefinitionSQL) -> str:
         """
@@ -419,6 +425,14 @@ class PidDefinitionCatalog:
         )
         return self.add(entry)
 
+    def delete(self, uniq:str) -> typing.Optional[PidDefinition]:
+        sql_defn = self.get_by_uniq(uniq)
+        if sql_defn is None:
+            return None
+        self._session.delete(sql_defn)
+        self._session.commit()
+        return PidDefinitionCatalog.sqldefinition_to_definition(sql_defn)
+
     def parse(self, pid_str: str) -> typing.Tuple[dict, typing.Optional[PidDefinitionSQL]]:
         parts = rslv.lib_rslv.split_identifier_string(pid_str)
         pid_definition = self.get(
@@ -438,6 +452,17 @@ class PidDefinitionCatalog:
             )
             parts["suffix"] = pid_str[suffix_pos:]
         return parts, pid_definition
+
+    def parse_as_definition(self, pid_str: str) -> typing.Tuple[rslv.lib_rslv.ParsedPID, typing.Optional[PidDefinition]]:
+        parts = rslv.lib_rslv.ParsedPID(pid=pid_str)
+        parts.split()
+        pid_definition = self.get_as_definition(parts)
+        # TODO: Suffix
+        return parts, pid_definition
+
+    def list_all(self):
+        q = sqlalchemy.select(PidDefinitionSQL.uniq)
+        return self._session.execute(q)
 
     def list_schemes(self):
         q = sqlalchemy.select(PidDefinitionSQL.scheme).distinct(PidDefinitionSQL.scheme)

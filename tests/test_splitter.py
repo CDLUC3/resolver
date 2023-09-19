@@ -130,3 +130,11 @@ def test_split(test, expected):
     result = rslv.lib_rslv.split_identifier_string(test)
     for k, v in expected.items():
         assert result[k] == expected[k]
+
+
+@pytest.mark.parametrize("test,expected", split_tests)
+def test_parsed_split(test, expected):
+    pid = rslv.lib_rslv.ParsedPID(pid=test)
+    pid.split()
+    for k,v in expected.items():
+        assert v == getattr(pid, k)

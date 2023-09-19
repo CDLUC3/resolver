@@ -70,6 +70,7 @@ def main(ctx, verbosity):
     ctx.obj["engine"] = sqlalchemy.create_engine(
         rslv.config.settings.db_connection_string, pool_pre_ping=True
     )
+    ctx.obj["L"] = L
     return 0
 
 
@@ -123,6 +124,19 @@ def list_value(ctx, scheme, prefix):
         session.close()
 
 
+@main.command("uniqs")
+@click.pass_context
+def list_uniqs(ctx):
+    session = rslv.lib_rslv.piddefine.get_session(ctx.obj["engine"])
+    try:
+        definitions = rslv.lib_rslv.piddefine.PidDefinitionCatalog(session)
+        uniqs = definitions.list_all()
+        for uniq in uniqs:
+            print(uniq[0])
+    finally:
+        session.close()
+
+
 @main.command("add")
 @click.pass_context
 @click.option("-s", "--scheme", help="Scheme value for entry")
@@ -141,18 +155,39 @@ def list_value(ctx, scheme, prefix):
     "-y", "--synonym", default=None, help="This entry is a synonym for this uniq value."
 )
 def add_entry(ctx, scheme, prefix, value, target, canonical, synonym):
+    defn = rslv.lib_rslv.piddefine.PidDefinition(
+        scheme=scheme,
+        prefix=prefix,
+        value=value,
+        target=target,
+        canonical=canonical,
+        synonym=synonym
+    )
     session = rslv.lib_rslv.piddefine.get_session(ctx.obj["engine"])
     try:
         definitions = rslv.lib_rslv.piddefine.PidDefinitionCatalog(session)
-        entry = rslv.lib_rslv.piddefine.PidDefinitionSQL(
-            scheme=scheme,
-            prefix=prefix,
-            value=value,
-            target=target,
-            canonical=canonical,
-            synonym_for=synonym,
-        )
-        result = definitions.add(entry)
+        result = definitions.add_as_definition(defn)
+        definitions.refresh_metadata()
+        print(result)
+    finally:
+        session.close()
+
+
+@main.command("add-json")
+@click.pass_context
+@click.option(
+    "-d",
+    "--definition",
+    type=click.File("rt"),
+    default=sys.stdin,
+    help="File with JSON representation of the defintion to add, default=stdin"
+)
+def add_json(ctx, definition):
+    defn = rslv.lib_rslv.piddefine.PidDefinition.model_validate_json(definition)
+    session = rslv.lib_rslv.piddefine.get_session(ctx.obj["engine"])
+    try:
+        definitions = rslv.lib_rslv.piddefine.PidDefinitionCatalog(session)
+        result = definitions.add_as_definition(defn)
         definitions.refresh_metadata()
         print(result)
     finally:
@@ -163,13 +198,87 @@ def add_entry(ctx, scheme, prefix, value, target, canonical, synonym):
 @click.pass_context
 @click.argument("uniq")
 def get_entry(ctx, uniq):
+    """
+    Retrieve a PidDefinition by its uniq key ("scheme:prefix/value").
+
+    Args:
+        ctx: context
+        uniq: str the Key to find.
+
+    Returns:
+        PidDefinition as json or None
+    """
+    L = ctx.obj["L"]
+    uniq = uniq.strip(" /")
+    L.info("Looking for entry: '%s'", uniq)
     session = rslv.lib_rslv.piddefine.get_session(ctx.obj["engine"])
     try:
         definitions = rslv.lib_rslv.piddefine.PidDefinitionCatalog(session)
-        entry = definitions.get_as_definition(uniq=uniq)
+        entry = definitions.get_definition_by_uniq(uniq)
         if entry is None:
+            L.warning("No definition found for %s", uniq)
             print(json.dumps(None))
         else:
+            print(entry.model_dump_json(indent=2))
+    finally:
+        session.close()
+
+@main.command("delete")
+@click.pass_context
+@click.argument("uniq")
+def delete_entry(ctx, uniq):
+    """
+    Delete the pid definition with the provided key.
+    Args:
+        ctx: context
+        uniq: unique key for the defintion to delete
+
+    Returns:
+        JSON of the deleted object or None if not found.
+    """
+    L = ctx.obj["L"]
+    uniq = uniq.strip(" /")
+    L.info("Looking for entry: '%s'", uniq)
+    session = rslv.lib_rslv.piddefine.get_session(ctx.obj["engine"])
+    try:
+        definitions = rslv.lib_rslv.piddefine.PidDefinitionCatalog(session)
+        entry = definitions.delete(uniq)
+        if entry is None:
+            L.warning("No definition found for %s", uniq)
+            print(json.dumps(None))
+        else:
+            print(entry.model_dump_json(indent=2))
+    finally:
+        session.close()
+
+
+@main.command("match")
+@click.pass_context
+@click.argument("identifier")
+def match_entry(ctx, identifier):
+    """
+    Return the best match for the provided identifier string.
+
+    Args:
+        ctx:
+        identifier:
+
+    Returns:
+
+    """
+    L = ctx.obj["L"]
+    pid = rslv.lib_rslv.ParsedPID(pid=identifier)
+    pid.split()
+    L.info("Looking for entry %s", pid.pid)
+    session = rslv.lib_rslv.piddefine.get_session(ctx.obj["engine"])
+    try:
+        definitions = rslv.lib_rslv.piddefine.PidDefinitionCatalog(session)
+        entry = definitions.get_as_definition(pid)
+        if entry is None:
+            L.warning("No definition found for %s", pid.pid)
+            print(json.dumps(None))
+        else:
+            L.info("Matched %s to definition %s", pid.pid, entry.uniq)
             print(entry.model_dump_json(indent=2))
     finally:
         session.close()

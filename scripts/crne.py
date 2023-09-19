@@ -15,17 +15,18 @@ import httpx
 
 logging.basicConfig(level=logging.INFO)
 L = logging.getLogger()
+TIMEOUT = 30 #seconds
 
 
 async def get_response(session, url):
-    response = await session.request(method="GET", url=url, follow_redirects=True, timeout=30)
+    # TODO: terminate after some max bytes received
+    response = await session.request(method="GET", url=url, follow_redirects=True, timeout=TIMEOUT)
     result = {
         "start": url,
         "final": str(response.url),
         "status": response.status_code
     }
     return result
-
 
 async def do_work(ark):
     bases = [
