@@ -13,7 +13,7 @@ def current_time():
     return datetime.datetime.now(tz=datetime.timezone.utc)
 
 
-class Base(sqlorm.DeclarativeBase):
+class Base(sqlalchemy.orm.DeclarativeBase):
     pass
 
 
@@ -195,6 +195,11 @@ class PidDefinitionCatalog:
         self._session.commit()
 
     def get_metadata(self) -> dict:
+        """Retrieve metadata about this configuration.
+
+        Returns:
+            (dict) Basic information about the configuration.
+        """
         meta = self._session.get(ConfigMeta, 0)
         return {
             "description": meta.description,
@@ -202,6 +207,12 @@ class PidDefinitionCatalog:
         }
 
     def get_max_value_length(self) -> int:
+        """
+        Find the longest value in the available definition entries.
+
+        Returns:
+            (int) Length of the longest value.
+        """
         if self._cached_max_len > 0:
             return self._cached_max_len
         meta = self._session.get(ConfigMeta, 0)
@@ -210,6 +221,15 @@ class PidDefinitionCatalog:
 
     @classmethod
     def sqldefinition_to_definition(cls, sql_def: PidDefinitionSQL) -> PidDefinition:
+        """
+        Map a definition from the SQL store to a PidDefinition object which is used elsewhere.
+
+        Args:
+            sql_def: The definition to convert
+
+        Returns:
+            (PidDefinition) The converted definition.
+        """
         return PidDefinition(
             scheme=sql_def.scheme,
             prefix=sql_def.prefix,

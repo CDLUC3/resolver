@@ -1,0 +1,16 @@
+@startuml
+
+Actor user
+user -> rslv: pid_str
+activate rslv
+rslv -> splitter: [1] ]pid_str
+note over splitter: Split string to components\nfor matching a definition.
+splitter -> rslv: parsed_pid
+rslv -> definitions: match(parsed_pid)
+definitions --> definitions: reconcile_synonyms()
+definitions -> rslv: pid_definition
+note over rslv, splitter: Definition may specify an alternative\nsplitter. If so, return to [1] and apply\nnew splitter.
+rslv -> rslv: matched_pid(parsed_pid, pid_definition)
+rslv -> user: matched_pid
+deactivate rslv
+@enduml
