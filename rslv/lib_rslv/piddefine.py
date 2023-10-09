@@ -441,7 +441,8 @@ class PidDefinitionCatalog:
             pid_model=entry.pid_model,
             target=entry.target,
             http_code=entry.http_code,
-            canonical=entry.canonical
+            canonical=entry.canonical,
+            properties=entry.properties,
         )
         return self.add(entry)
 
@@ -521,6 +522,9 @@ class PidDefinitionCatalog:
 def get_session(engine):
     return sqlalchemy.orm.sessionmaker(bind=engine)()
 
+
+def get_catalog(engine):
+    return PidDefinitionCatalog(get_session(engine))
 
 def create_database(engine, description: str):
     """
