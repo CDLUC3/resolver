@@ -1,5 +1,4 @@
 @startuml
-
 Actor user
 user -> rslv: pid_str
 activate rslv
@@ -9,8 +8,8 @@ splitter -> rslv: parsed_pid
 rslv -> definitions: match(parsed_pid)
 definitions --> definitions: reconcile_synonyms()
 definitions -> rslv: pid_definition
-note over rslv, splitter: Definition may specify an alternative\nsplitter. If so, return to [1] and apply\nnew splitter.
 rslv -> rslv: matched_pid(parsed_pid, pid_definition)
-rslv -> user: matched_pid
+rslv -> user: action(matched_pid)
+note right: action() may be redirect\n to target or return metadata.
 deactivate rslv
 @enduml

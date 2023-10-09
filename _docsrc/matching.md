@@ -8,6 +8,9 @@ comment: >
 # Matching and Resolution
 
 The core functionality of `rslv` is to match a provided identifier to a redirect target definition and either return information about the corresponding definition or redirect the requestor to the defined target.
+
+It does this by splitting the input identifier string into various components and finding the best match to the components from a list of identifier definitions. The components and defintion are then used to construct a response that will be either a redirect to the registered target or metadata about the identifier (Figure 1).
+
 <figure>
 
 [![Identifier matching](https://tinyurl.com/ylejjbcr)](https://tinyurl.com/ylejjbcr)<!--![Identifier matching](./assets/matching.puml)-->
