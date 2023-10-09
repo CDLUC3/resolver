@@ -17,6 +17,11 @@ sqlalchemy = "^2.0.20"
 pytest = "^7"
 requests = "^2.31.0"
 uvicorn = {extras = ["standard"], version = "^0.23.2"}
+jupyter = "^1.0.0"
+iplantuml = "^0.1.1"
+py-markdown-table = "^0.4.0"
+codebraid = "^0.10.3"
+ruamel-yaml = "^0.17.35"
 
 [tool.poetry.scripts]
 rslv = "scripts.manage:main"
