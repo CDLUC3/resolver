@@ -28,32 +28,39 @@ def setup_config():
     try:
         do_add(cfg, rslv.lib_rslv.piddefine.PidDefinitionSQL(
             scheme="DEFAULT",
+            properties={"tag":0},
         ))
         do_add(cfg, rslv.lib_rslv.piddefine.PidDefinitionSQL(
             scheme="ark",
-        ))
-        do_add(cfg, rslv.lib_rslv.piddefine.PidDefinitionSQL(
-            scheme="ark",
-            prefix="99999",
-        ))
-        do_add(cfg, rslv.lib_rslv.piddefine.PidDefinitionSQL(
-            scheme="ark",
-            prefix="99999",
-            value="fk4"
+            properties={"tag": 1},
         ))
         do_add(cfg, rslv.lib_rslv.piddefine.PidDefinitionSQL(
             scheme="ark",
             prefix="99999",
-            value="fk"
+            properties={"tag": 2},
+        ))
+        do_add(cfg, rslv.lib_rslv.piddefine.PidDefinitionSQL(
+            scheme="ark",
+            prefix="99999",
+            value="fk4",
+            properties={"tag": 3},
+        ))
+        do_add(cfg, rslv.lib_rslv.piddefine.PidDefinitionSQL(
+            scheme="ark",
+            prefix="99999",
+            value="fk",
+            properties={"tag": 4},
         ))
         do_add(cfg, rslv.lib_rslv.piddefine.PidDefinitionSQL(
             scheme="ark",
             prefix="example",
-            synonym_for="ark:99999"
+            synonym_for="ark:99999",
+            properties={"tag": 5},
         ))
         do_add(cfg, rslv.lib_rslv.piddefine.PidDefinitionSQL(
             scheme="bark",
-            synonym_for="ark:"
+            synonym_for="ark:",
+            properties={"tag": 6},
         ))
         cfg.refresh_metadata()
     finally:
@@ -70,35 +77,35 @@ parse_cases = (
     ),
     (
         "ark:foo",
-        {"scheme":"ark", "prefix": ""}
+        {"scheme":"ark", "prefix": "", "value":"", "tag":1}
     ),
     (
         "ark:99999",
-        {"scheme": "ark", "prefix": "99999"}
+        {"scheme": "ark", "prefix": "99999", "value":"", "tag":2}
     ),
     (
         "ark:99999/foo",
-        {"scheme": "ark", "prefix": "99999", "value":""}
+        {"scheme": "ark", "prefix": "99999", "value":"", "tag":2}
     ),
     (
         "ark:example/foo",
-        {"scheme": "ark", "prefix": "99999", "value":""}
+        {"scheme": "ark", "prefix": "99999", "value":"", "tag":2}
     ),
     (
         "ark:99999/fk44",
-        {"scheme": "ark", "prefix": "99999", "value": "fk4"}
+        {"scheme": "ark", "prefix": "99999", "value": "fk4", "tag":3}
     ),
     (
         "ark:99999/fkfoo",
-        {"scheme": "ark", "prefix": "99999", "value": "fk"}
+        {"scheme": "ark", "prefix": "99999", "value": "fk", "tag":4}
     ),
     (
         "ark:99999/fk44wlr;jglerig",
-        {"scheme": "ark", "prefix": "99999", "value": "fk4"}
+        {"scheme": "ark", "prefix": "99999", "value": "fk4", "tag": 3}
     ),
     (
         "bark:99999/fk44wlr;jglerig",
-        {"scheme": "ark", "prefix": "99999", "value": "fk4"}
+        {"scheme": "ark", "prefix": "99999", "value": "fk4", "tag":3}
     ),
 )
 
@@ -113,5 +120,26 @@ def test_parse(test, expected):
         else:
             assert definition.scheme == expected["scheme"]
             assert definition.prefix == expected["prefix"]
+            assert definition.value == expected.get("value")
+            assert definition.properties.get("tag") == expected.get("tag")
+    finally:
+        session.close()
+
+
+@pytest.mark.parametrize("test,expected", parse_cases)
+def test_parse_struct(test, expected):
+    session = get_session()
+    cfg = rslv.lib_rslv.piddefine.PidDefinitionCatalog(session)
+    try:
+        ppid = rslv.lib_rslv.ParsedPID(pid=test)
+        ppid.split()
+        definition = cfg.get_as_definition(ppid, resolve_synonym=True)
+        if expected is None:
+            assert definition is None
+        else:
+            assert definition.scheme == expected["scheme"]
+            assert definition.prefix == expected["prefix"]
+            assert definition.value == expected.get("value")
+            assert definition.properties.get("tag") == expected.get("tag")
     finally:
         session.close()
