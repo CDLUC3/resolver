@@ -80,11 +80,11 @@ def definition_table():
     for defn in DEFINITIONS:
         i += 1
         defns.append({
-            "Tag": defn.properties.get("tag"),
-            "Scheme": defn.scheme,
-            "Prefix": "" if defn.prefix is None else defn.prefix,
-            "Value": "" if defn.value is None else defn.value,
-            "Synonym_for": "" if defn.synonym_for is None else defn.synonym_for
+            "Tag": f"`{defn.properties.get('tag')}`",
+            "Scheme": f"`{defn.scheme}`",
+            "Prefix": "` `" if defn.prefix is None or defn.prefix == '' else f"`{defn.prefix}`",
+            "Value": "` `" if defn.value is None or defn.value == '' else f"`{defn.value}`",
+            "Synonym_for": "` `" if defn.synonym_for is None else f"`{defn.synonym_for}`"
         })
     print(markdown_table(defns).set_params(row_sep='markdown', quote=False).get_markdown())
 
@@ -98,8 +98,8 @@ def defn_match_table(pids=EXAMPLE_PIDS):
         ppid.split()
         defn = catalog.get_as_definition(ppid, resolve_synonym=True)
         result = {
-            "PID": pid,
-            "Defn Tag": "" if defn is None else defn.properties.get("tag")
+            "PID": f"`{pid}`",
+            "Defn Tag": "" if defn is None else f"`{defn.properties.get('tag')}`"
         }
         results.append(result)
     print(markdown_table(results).set_params(row_sep='markdown', quote=False).get_markdown())
