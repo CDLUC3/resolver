@@ -16,6 +16,25 @@ COMMENT_CHAR = "#"
 DATE_MATCH = re.compile(r"\d{4}\.\d{2}\.\d{2}")
 DATE_PATTERN = "%Y.%m.%d"
 
+# regexp for matching a general identifier pattern of scheme:content
+RE_IDENTIFIER = re.compile(
+    r"\b(?P<PID>(?P<scheme>[A-Za-z0-9/;.\-]+):/?(?P<content>\S+))\b",
+    re.IGNORECASE | re.MULTILINE
+)
+
+
+def identifiers_in_text(text: str) -> typing.Generator[dict, None, int]:
+    count = 0
+    for match in RE_IDENTIFIER.finditer(text):
+        pid = {
+            "pid": match.group("PID"),
+            "scheme": match.group('scheme'),
+            "content": match.group('content'),
+        }
+        count += 1
+        yield pid
+    return count
+
 
 def _convert_value(v):
     """Return parsed representation of value loaded from YAML"""

@@ -4,12 +4,13 @@ Script for basic management of the pid configuration sqlite instance.
 import json
 import logging
 import logging.config
+import os.path
 import sys
 import click
 import httpx
 import sqlalchemy
 
-import rslv.lib_rslv.nt2utils
+import rslv.lib_rslv.n2tutils
 import rslv.lib_rslv.piddefine
 import rslv.config
 
@@ -164,7 +165,13 @@ def add_entry(ctx, scheme, prefix, value, target, canonical, synonym):
     help="URL from which to retrieve public NAAN registry JSON.",
     default="https://cdluc3.github.io/naan_reg_public/naans_public.json",
 )
-def load_public_naans(ctx, url):
+@click.option(
+    "-z",
+    "--ezid-naans",
+    help="JSON list of NAANs managed by EZID",
+    default="ezid_naans.json"
+)
+def load_public_naans(ctx, url, ezid_naans):
     """
     Load NAAN definitions from the Public NAAN registry.
 
@@ -177,11 +184,20 @@ def load_public_naans(ctx, url):
     Args:
         ctx: context
         url: URL of the public NAANs JSON.
-
+        ezid_naans: path to JSON list of NAANs managed by EZID
     Returns:
 
     """
+
     L = get_logger()
+    ezid_naan_list = []
+    if os.path.exists(ezid_naans):
+        with open(ezid_naans, "r") as inf:
+            ezid_naan_list = json.load(inf)
+        L.info("Loaded %s EZID NAANs from %s", len(ezid_naan_list), ezid_naans)
+    else:
+        L.warning("No EZID NAAN list available, missing: %s", ezid_naans)
+
     session = rslv.lib_rslv.piddefine.get_session(ctx.obj["engine"])
     try:
         definitions = rslv.lib_rslv.piddefine.PidDefinitionCatalog(session)
@@ -214,13 +230,21 @@ def load_public_naans(ctx, url):
             L.warning(e)
             pass
         for naan, record in data.items():
+            naan = str(naan)
             L.debug("Loading %s", naan)
             properties = record
             target = record.get("target", None)
             if target is None:
                 target = "/.info/{pid}"
             else:
-                target = target.replace("$arkpid", "ark:/{prefix}/{value}")
+                if naan in ezid_naan_list:
+                    # Special case of a NAAN that is managed by EZID
+                    # Need to override the target
+                    L.info("EZID NAAN: %s", naan)
+                    target = "https://ezid.cdlib.org/ark:/{prefix}/{value}"
+                else:
+                    L.debug("NAAN: %s", naan)
+                    target = target.replace("$arkpid", "ark:/{prefix}/{value}")
             entry = rslv.lib_rslv.piddefine.PidDefinition(
                 scheme="ark",
                 prefix=naan,
@@ -254,7 +278,7 @@ def load_naan_shoulders(ctx, source):
         anvl_src = open(source, "r").read()
         definitions = rslv.lib_rslv.piddefine.PidDefinitionCatalog(session)
         canonical = "ark:{prefix}/{value}"
-        for entry in rslv.lib_rslv.nt2utils.naa_records_from_anvl_text(anvl_src):
+        for entry in rslv.lib_rslv.n2tutils.naa_records_from_anvl_text(anvl_src):
             parts = rslv.lib_rslv.split_identifier_string(entry.get("id", ""))
             if parts["value"] is None or parts["scheme"] != "ark":
                 continue
