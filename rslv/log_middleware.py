@@ -1,5 +1,9 @@
 """
 Implements a custom logger in JSON-lines format for FastAPI.
+
+Borrowed various pieces from:
+- https://stackoverflow.com/questions/70891687/how-do-i-get-my-fastapi-applications-console-log-in-json-format-with-a-differen
+- https://www.sheshbabu.com/posts/fastapi-structured-json-logging/
 """
 import json
 import logging
