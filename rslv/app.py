@@ -9,26 +9,28 @@ about the identifier or redirect the user to the registered target.
 """
 import logging.config
 import os
+import sys
 
-import rslv.config
 import fastapi
 import fastapi.responses
 import fastapi.middleware.cors
 import fastapi.staticfiles
 import fastapi.templating
 
+import rslv
+import rslv.config
+import rslv.log_middleware
 import rslv.routers.resolver
 
-__version__ = "0.3.0"
+# Setup access logging
+L = rslv.log_middleware.get_logger("rslv", log_filename=rslv.config.settings.log_filename)
 
-logging.config.fileConfig("rslv/logging.conf", disable_existing_loggers=False)
-L = logging.getLogger("resolver")
 
 # Intialize the application
 app = fastapi.FastAPI(
     title="RSLV",
     description=__doc__,
-    version=__version__,
+    version=rslv.__version__,
     contact={"name": "Dave Vieglais", "url": "https://github.com/datadavev/"},
     license_info={
         "name": "MIT",
@@ -56,6 +58,11 @@ app.add_middleware(
     ],
 )
 
+app.add_middleware(
+    rslv.log_middleware.LogMiddleware,
+    logger=L,
+)
+
 
 # static files and templates
 app.mount(
@@ -63,6 +70,7 @@ app.mount(
     fastapi.staticfiles.StaticFiles(directory=rslv.config.settings.static_dir),
     name="static",
 )
+
 templates = fastapi.templating.Jinja2Templates(
     directory=rslv.config.settings.template_dir
 )
@@ -90,7 +98,7 @@ if __name__ == "__main__":
             "app:app",
             port=rslv.config.settings.port,
             host=rslv.config.settings.host,
-            reload=True,
+            reload=True
         )
     except ImportError as e:
         print("Unable to run as uvicorn is not available.")
