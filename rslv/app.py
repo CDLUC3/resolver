@@ -11,17 +11,16 @@ import logging.config
 import os
 import sys
 
-import rslv.config
 import fastapi
 import fastapi.responses
 import fastapi.middleware.cors
 import fastapi.staticfiles
 import fastapi.templating
 
+import rslv
+import rslv.config
 import rslv.log_middleware
 import rslv.routers.resolver
-
-__version__ = "0.3.0"
 
 # Setup access logging
 L = rslv.log_middleware.get_logger("rslv", log_filename=rslv.config.settings.log_filename)
@@ -31,7 +30,7 @@ L = rslv.log_middleware.get_logger("rslv", log_filename=rslv.config.settings.log
 app = fastapi.FastAPI(
     title="RSLV",
     description=__doc__,
-    version=__version__,
+    version=rslv.__version__,
     contact={"name": "Dave Vieglais", "url": "https://github.com/datadavev/"},
     license_info={
         "name": "MIT",
