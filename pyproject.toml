@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "rslv"
-version = "0.3.1"
+version = "0.4.0"
 description = "Provides an identifier resolver service in FastAPI."
 authors = ["datadave <605409+datadavev@users.noreply.github.com>"]
 license = "MIT"
