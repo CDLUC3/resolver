@@ -16,6 +16,14 @@ class Base(sqlorm.DeclarativeBase):
     pass
 
 
+def calculate_definition_uniq(scheme, prefix, value):
+    s = scheme if scheme is not None else ""
+    p = prefix if prefix is not None else ""
+    if value is not None:
+        return f"{s}:{p}/{value}"
+    return f"{s}:{p}"
+
+
 def default_definition_uniq(context):
     """Create a single string representation of scheme:prefix/value.
 
@@ -24,11 +32,7 @@ def default_definition_uniq(context):
     synonym target lookup.
     """
     params = context.get_current_parameters()
-    s = params["scheme"] if params["scheme"] is not None else ""
-    p = params["prefix"] if params["prefix"] is not None else ""
-    if params["value"] is not None:
-        return f"{s}:{p}/{params['value']}"
-    return f"{s}:{p}"
+    return calculate_definition_uniq(params["scheme"], params["prefix"], params["value"])
 
 
 class PidDefinition(Base):
@@ -105,6 +109,32 @@ class PidDefinition(Base):
         if "/" in prefix:
             raise ValueError("'/' is not allowed in prefix.")
         return prefix
+
+    def update(self, entry: "PidDefinition") -> int:
+        n_updates = 0
+        #uniq, scheme, prefix, and value can not be updated.
+        if entry.splitter is not None and entry.splitter != self.splitter:
+            self.splitter = entry.splitter
+            n_updates += 1
+        if entry.pid_model is not None and entry.pid_model != self.pid_model:
+            self.pid_mode = entry.pid_model
+            n_updates += 1
+        if entry.target is not None and entry.target != self.target:
+            self.target = entry.target
+            n_updates += 1
+        if entry.http_code is not None and entry.http_code != self.http_code:
+            self.http_code = entry.http_code
+            n_updates += 1
+        if entry.canonical is not None and entry.canonical != self.canonical:
+            self.canonical = entry.canonical
+            n_updates += 1
+        if entry.synonym_for is not None and entry.synonym_for != self.synonym_for:
+            self.synonym_for = entry.synonym_for
+            n_updates += 1
+        if entry.properties is not None and entry.properties != self.properties:
+            self.properties = entry.properties
+            n_updates += 1
+        return n_updates
 
 
 class ConfigMeta(Base):
@@ -334,6 +364,17 @@ class PidDefinitionCatalog:
         self._session.add(entry)
         self._session.commit()
         return entry.uniq
+
+
+    def update(self, entry: PidDefinition) -> int:
+        existing_entry = self.get_by_uniq(entry.uniq)
+        if existing_entry is None:
+            raise ValueError(f"No existing record for: {entry.uniq}")
+        n_changes = existing_entry.update(entry)
+        if n_changes > 0:
+            self._session.commit()
+        return n_changes
+
 
     def parse(self, pid_str: str) -> typing.Tuple[dict, typing.Optional[PidDefinition]]:
         parts = rslv.lib_rslv.split_identifier_string(pid_str)
