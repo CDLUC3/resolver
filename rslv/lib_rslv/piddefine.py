@@ -1,6 +1,7 @@
 import datetime
 import typing
 import sqlalchemy as sqla
+import sqlalchemy.exc
 import sqlalchemy.orm as sqlorm
 import sqlalchemy.types
 import sqlalchemy.sql.expression
@@ -374,6 +375,19 @@ class PidDefinitionCatalog:
         if n_changes > 0:
             self._session.commit()
         return n_changes
+
+
+    def add_or_update(self, entry: PidDefinition) -> typing.Dict:
+        res = {"uniq":"", "n_changes":0,}
+        try:
+            res["uniq"] = self.add(entry)
+        except sqlalchemy.exc.IntegrityError as e:
+            self._session.rollback()
+            entry.uniq = calculate_definition_uniq(entry.scheme, entry.prefix, entry.value)
+            res["uniq"] = entry.uniq
+            res["n_changes"] = self.update(entry)
+        return res
+
 
 
     def parse(self, pid_str: str) -> typing.Tuple[dict, typing.Optional[PidDefinition]]:
