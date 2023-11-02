@@ -2,3 +2,6 @@ fastapi
 pydantic-settings
 sqlalchemy
 jinja2
+click
+httpx
+pyyaml
