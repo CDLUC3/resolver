@@ -33,7 +33,9 @@ def default_definition_uniq(context):
     synonym target lookup.
     """
     params = context.get_current_parameters()
-    return calculate_definition_uniq(params["scheme"], params["prefix"], params["value"])
+    return calculate_definition_uniq(
+        params["scheme"], params["prefix"], params["value"]
+    )
 
 
 class PidDefinition(Base):
@@ -113,7 +115,7 @@ class PidDefinition(Base):
 
     def update(self, entry: "PidDefinition") -> int:
         n_updates = 0
-        #uniq, scheme, prefix, and value can not be updated.
+        # uniq, scheme, prefix, and value can not be updated.
         if entry.splitter is not None and entry.splitter != self.splitter:
             self.splitter = entry.splitter
             n_updates += 1
@@ -206,10 +208,7 @@ class PidDefinitionCatalog:
 
     def get_metadata(self) -> dict:
         meta = self._session.get(ConfigMeta, 0)
-        return {
-            "description": meta.description,
-            "created": meta.created.isoformat()
-        }
+        return {"description": meta.description, "created": meta.created.isoformat()}
 
     def get_max_value_length(self) -> int:
         if self._cached_max_len > 0:
@@ -366,7 +365,6 @@ class PidDefinitionCatalog:
         self._session.commit()
         return entry.uniq
 
-
     def update(self, entry: PidDefinition) -> int:
         existing_entry = self.get_by_uniq(entry.uniq)
         if existing_entry is None:
@@ -376,19 +374,21 @@ class PidDefinitionCatalog:
             self._session.commit()
         return n_changes
 
-
     def add_or_update(self, entry: PidDefinition) -> typing.Dict:
-        res = {"uniq":"", "n_changes":0,}
+        res = {
+            "uniq": "",
+            "n_changes": -1,
+        }
         try:
             res["uniq"] = self.add(entry)
         except sqlalchemy.exc.IntegrityError as e:
             self._session.rollback()
-            entry.uniq = calculate_definition_uniq(entry.scheme, entry.prefix, entry.value)
+            entry.uniq = calculate_definition_uniq(
+                entry.scheme, entry.prefix, entry.value
+            )
             res["uniq"] = entry.uniq
             res["n_changes"] = self.update(entry)
         return res
-
-
 
     def parse(self, pid_str: str) -> typing.Tuple[dict, typing.Optional[PidDefinition]]:
         parts = rslv.lib_rslv.split_identifier_string(pid_str)
