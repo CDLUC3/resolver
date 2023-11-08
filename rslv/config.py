@@ -4,7 +4,6 @@ import typing
 import pydantic_settings
 
 BASE_FOLDER = os.path.dirname(os.path.abspath(__file__))
-print(BASE_FOLDER)
 
 class Settings(pydantic_settings.BaseSettings):
     # env_prefix provides the environment variable prefix
