@@ -1,0 +1,20 @@
+@startuml
+(*) --> "scheme, prefix, value = split"
+if "scheme, prefix, value match" then
+  --> [yes] "definition(scheme, prefix, value)"
+  --> (*)
+else
+  if "scheme, value match" then
+    --> [yes] "defintion(scheme, prefix)"
+    --> (*)
+  else
+    if "scheme match" then
+      --> [yes] "definition(scheme)"
+      --> (*)
+    else
+      --> "None"
+      --> (*)
+    endif
+  endif
+endif
+@enduml
