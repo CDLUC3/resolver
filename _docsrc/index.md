@@ -1,5 +1,5 @@
 ---
-title: `rslv` Generic Resolver Service
+title: "`rslv` Generic Resolver Service"
 ---
 
 `rslv` implements a resolver service. That is, given an identifier string, the service returns information about the identifier or redirects to the known location of the identified resource.
