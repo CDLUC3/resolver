@@ -83,6 +83,48 @@ def _adjust_redirect_protocol(r, default_protocol="https"):
     return f"{default_protocol}://{r.lstrip('/')}"
 
 
+def _is_valid_target(target:typing.Optional[str]) -> bool:
+    if target is None:
+        return False
+    _t = target.strip()
+    _t = target.lower()
+    if len(_t) < 6:
+        return False
+    if _t in [
+        "",
+        "http://n/a",
+        "https://n/a",
+        "https://unavailable",
+        "http://unavailable",
+        "https://no search",
+        "http://no search",
+        "https://need login",
+        "http://need login",
+        "https://need a Login",
+        "http://need a Login",
+        "https://login needed",
+        "http://login needed",
+        "https://login required",
+        "http://login required",
+    ]:
+        return False
+    return True
+
+
+def _is_valid_prefix_target(pfx):
+    target = pfx.get("target", None)
+    if target is None:
+        return True
+    if pfx.get("type", "") in [
+        "synonym",
+    ]:
+        return True
+    if target == {}:
+        return False
+    _t = target.get("DEFAULT", "")
+    return _is_valid_target(_t)
+
+
 def cleanPrefix(key, data, field_map=None):
     """Clean a prefix entry retrieved from YAML"""
     values = {}
@@ -101,33 +143,14 @@ def cleanPrefix(key, data, field_map=None):
         _redirect = _redirect.replace("'", "%27")
         _redirect = _redirect.replace('"', "%22")
         _redirect = _adjust_redirect_protocol(_redirect)
-        _entry["redirect"] = _redirect
-        _entry["target"]["DEFAULT"] = _redirect
+        if _is_valid_target(_redirect):
+            _entry["redirect"] = _redirect
+            _entry["target"]["DEFAULT"] = _redirect
     return _entry
 
 
-def _is_valid_target(pfx):
-    target = pfx.get("target", None)
-    if target is None:
-        return True
-    if pfx.get("type", "") in [
-        "synonym",
-    ]:
-        return True
-    if target == {}:
-        return False
-    _t = target.get("DEFAULT", "")
-    if _t in [
-        "http://N/A",
-        "https://N/A",
-        "",
-    ]:
-        return False
-    return True
-
-
 def n2t_prefixes_from_yaml(
-    yamlsrc: str,
+    yamlsrc:typing.IO,
     ignore_types: typing.Optional[typing.Iterable[str]] = None,
     ignore_bad_targets: bool = True,
 ) -> dict:
@@ -158,7 +181,9 @@ def n2t_prefixes_from_yaml(
     for k, v in _data.items():
         if v.get("type", "") not in ignore_types:
             _cleaned = cleanPrefix(k, v)
-            if ignore_bad_targets and _is_valid_target(_cleaned):
+            if _cleaned.get("revision", None) is None:
+                _cleaned["revision"] = 0
+            if ignore_bad_targets and _is_valid_prefix_target(_cleaned):
                 data[k] = _cleaned
             else:
                 data[k] = _cleaned

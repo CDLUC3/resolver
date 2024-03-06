@@ -58,6 +58,7 @@ router = fastapi.APIRouter(
 
 
 def pid_format(parts, template):
+
     """Quick hack to avoid "None" appearing in generated string"""
     _parts = {}
     for k, v in parts.items():
@@ -74,11 +75,10 @@ def pid_format(parts, template):
 )
 def get_service_info(
     request: fastapi.Request,
-    pid_config: rslv.lib_rslv.piddefine.PidDefinitionCatalog = fastapi.Depends(
-        create_pidconfig_repository
-    ),
+    valid: bool = True
 ):
-    schemes = pid_config.list_schemes()
+    pid_config = rslv.lib_rslv.piddefine.PidDefinitionCatalog(request.state.dbsession)
+    schemes = pid_config.list_schemes(valid_targets_only=valid)
     return {
         "about": pid_config.get_metadata(),
         "api": "/api",
@@ -94,10 +94,8 @@ def get_service_info(
 def get_info(
     request: fastapi.Request,
     identifier: typing.Optional[str] = None,
-    pid_config: rslv.lib_rslv.piddefine.PidDefinitionCatalog = fastapi.Depends(
-        create_pidconfig_repository
-    ),
 ):
+    pid_config = rslv.lib_rslv.piddefine.PidDefinitionCatalog(request.state.dbsession)
     identifier = urllib.parse.unquote(identifier)
     identifier = identifier.lstrip(" /:.;,")
     if identifier in ("", "{identifier}"):
@@ -108,7 +106,7 @@ def get_info(
     if raw_identifier.endswith("?info"):
         raw_identifier = raw_identifier[:-5]
     raw_identifier = raw_identifier.rstrip("?")
-    pid_parts, definition = pid_config.parse(raw_identifier)
+    pid_parts, definition = pid_config.parse(raw_identifier, resolve_synonym=False)
     # TODO: This is where a definition specific handler can be used for
     #   further processing of the PID, e.g. to remove hyphens from an ark.
     #   Basically, add a property to the definition that contains the name
@@ -154,10 +152,8 @@ def get_info(
 def get_resolve(
     request: fastapi.Request,
     identifier: typing.Optional[str] = None,
-    pid_config: rslv.lib_rslv.piddefine.PidDefinitionCatalog = fastapi.Depends(
-        create_pidconfig_repository
-    ),
 ):
+    pid_config = rslv.lib_rslv.piddefine.PidDefinitionCatalog(request.state.dbsession)
     # ARK resolvers have wierd behavior of providing an
     # introspection ("inflection") when the URL ends with
     # "?", "??", or "?info". Need to examine the raw URL
