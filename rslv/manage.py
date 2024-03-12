@@ -65,9 +65,10 @@ def main(ctx, verbosity):
     logging_config["loggers"][""]["level"] = verbosity
     logging.config.dictConfig(logging_config)
     L = get_logger()
+    settings = rslv.config.load_settings()
     ctx.ensure_object(dict)
     ctx.obj["engine"] = sqlalchemy.create_engine(
-        rslv.config.settings.db_connection_string, pool_pre_ping=True
+        settings.db_connection_string, pool_pre_ping=True
     )
     return 0
 

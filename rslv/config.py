@@ -46,4 +46,4 @@ def load_settings():
     return Settings()
 
 
-settings = load_settings()
+#settings = load_settings()

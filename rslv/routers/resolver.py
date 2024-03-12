@@ -9,44 +9,44 @@ import sqlalchemy.orm
 import rslv.lib_rslv.piddefine
 import rslv.config
 
-settings = rslv.config.settings
+#settings = rslv.config.settings
 
-ENGINE = None
-
-
-def get_engine():
-    global ENGINE
-    if ENGINE is None:
-        ENGINE = sqlalchemy.create_engine(
-            settings.db_connection_string + "?mode=ro", pool_pre_ping=True
-        )
-    return ENGINE
+#ENGINE = None
 
 
-@contextlib.asynccontextmanager
-async def resolver_lifespan(app: fastapi.FastAPI):
-    engine = get_engine()
-    # The pid config database must already exist and be populated.
-    # rslv.lib_rslv.pidconfig.create_database(engine)
-    yield
-    # Shutdown the engine when done.
-    engine.dispose()
+#def get_engine():
+#    global ENGINE
+#    if ENGINE is None:
+#        ENGINE = sqlalchemy.create_engine(
+#            settings.db_connection_string + "?mode=ro", pool_pre_ping=True
+#        )
+#    return ENGINE
 
 
-def create_pidconfig_repository() -> (
-    typing.Iterator[rslv.lib_rslv.piddefine.PidDefinitionCatalog]
-):
-    # We need to get the engine here to support operation on serverless environments where
-    # the lifespan functionality is generally not supported.
-    engine = get_engine()
-    session = sqlalchemy.orm.sessionmaker(bind=engine)()
-    pid_config = rslv.lib_rslv.piddefine.PidDefinitionCatalog(session)
-    try:
-        yield pid_config
-    except Exception:
-        session.rollback()
-    finally:
-        session.close()
+#@contextlib.asynccontextmanager
+#async def resolver_lifespan(app: fastapi.FastAPI):
+#    engine = get_engine()
+#    # The pid config database must already exist and be populated.
+#    # rslv.lib_rslv.pidconfig.create_database(engine)
+#    yield
+#    # Shutdown the engine when done.
+#    engine.dispose()
+
+
+#def create_pidconfig_repository() -> (
+#    typing.Iterator[rslv.lib_rslv.piddefine.PidDefinitionCatalog]
+#):
+#    # We need to get the engine here to support operation on serverless environments where
+#    # the lifespan functionality is generally not supported.
+#    engine = get_engine()
+#    session = sqlalchemy.orm.sessionmaker(bind=engine)()
+#    pid_config = rslv.lib_rslv.piddefine.PidDefinitionCatalog(session)
+#    try:
+#        yield pid_config
+#    except Exception:
+#        session.rollback()
+#    finally:
+#        session.close()
 
 
 router = fastapi.APIRouter(
@@ -95,17 +95,33 @@ def get_info(
     request: fastapi.Request,
     identifier: typing.Optional[str] = None,
 ):
+    """
+    Retrieve information about the identifier provided on the path.
+
+    request.state.dbsession is expected to be a DBSession object that will be used
+    by the PidDefinitionCatalog to retrieve identifier information from the catalog.
+
+    """
+    if not hasattr(request.state, "dbsession"):
+        raise fastapi.HTTPException(status_code=500, detail="No dbsession available. Check server configration.")
     pid_config = rslv.lib_rslv.piddefine.PidDefinitionCatalog(request.state.dbsession)
     identifier = urllib.parse.unquote(identifier)
     identifier = identifier.lstrip(" /:.;,")
+    # Nothing provided, return information about this service.
     if identifier in ("", "{identifier}"):
         return get_service_info(request, pid_config=pid_config)
+    # Starlette or fastapi will split the value on the query part, so instead we grab the
+    # raw request url and grab the full identifier string ourselves
     request_url = str(request.url)
     request_url = urllib.parse.unquote(request_url)
+    # Grab the full identifier, starting with the fastapi parsed identifier string,
+    # which will be equal to the start of the full identifier string in the url.
     raw_identifier = request_url[request_url.find(identifier) :]
+    # Already in the info request, so discard ARK inflection request parts
     if raw_identifier.endswith("?info"):
         raw_identifier = raw_identifier[:-5]
     raw_identifier = raw_identifier.rstrip("?")
+    # Parse the PID and retrieve the matching definition from the catalog
     pid_parts, definition = pid_config.parse(raw_identifier, resolve_synonym=False)
     # TODO: This is where a definition specific handler can be used for
     #   further processing of the PID, e.g. to remove hyphens from an ark.
@@ -153,11 +169,13 @@ def get_resolve(
     request: fastapi.Request,
     identifier: typing.Optional[str] = None,
 ):
+    if not hasattr(request.state, "dbsession"):
+        raise fastapi.HTTPException(status_code=500, detail="No dbsession available. Check server configration.")
     pid_config = rslv.lib_rslv.piddefine.PidDefinitionCatalog(request.state.dbsession)
-    # ARK resolvers have wierd behavior of providing an
+    # ARK resolvers have behavior of returning an
     # introspection ("inflection") when the URL ends with
-    # "?", "??", or "?info". Need to examine the raw URL
-    # to determine these.
+    # "?", "??", or "?info". It is necessary to examine the raw URL
+    # to determine this since it is non-standard behavior.
     request_url = str(request.url)
     for check in ("?", "??", "?info"):
         if request_url.endswith(check):
@@ -168,7 +186,7 @@ def get_resolve(
     request_url = urllib.parse.unquote(request_url)
     raw_identifier = request_url[request_url.find(identifier) :]
     pid_parts, definition = pid_config.parse(raw_identifier)
-    # TODO: see above in get_info for PID handling.
+    # TODO: see above in get_info for PID handling with specific schemes.
     if definition is not None:
         # We have a match from the definition catalog.
         # Redirect the response, but include our gathered info in the body
