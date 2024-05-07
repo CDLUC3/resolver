@@ -1,5 +1,6 @@
 import importlib
 import typing
+import urllib.parse
 
 
 def load_parser(class_name):
@@ -32,3 +33,18 @@ def split_identifier_string(pid_str: str) -> typing.Dict[str, typing.Any]:
     except IndexError:
         pass
     return parsed
+
+
+def unsplit_identifier_string(template_str:str, pid_parts:dict) -> str:
+    """Unsplit a dict of identifier components.
+
+    template_str is a python fstring compatible string that will be filled with
+    values from pid_parts. If as_url is set, then pid_parts are url encoded first.
+    """
+    encoded_pid_parts = pid_parts.copy()
+    encoded_pid_parts["pid_enc"] = urllib.parse.quote(pid_parts["pid"])
+    encoded_pid_parts["scheme_enc"] = urllib.parse.quote(pid_parts["scheme"])
+    encoded_pid_parts["content_enc"] = urllib.parse.quote(pid_parts["content"])
+    encoded_pid_parts["prefix_enc"] = urllib.parse.quote(pid_parts["prefix"])
+    encoded_pid_parts["value_enc"] = urllib.parse.quote(pid_parts["value"])
+    return template_str.format(**encoded_pid_parts)

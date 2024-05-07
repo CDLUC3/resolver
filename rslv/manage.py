@@ -131,6 +131,9 @@ def list_value(ctx, scheme, prefix):
     "-t", "--target", help="Pattern for creation of target values", default="{pid}"
 )
 @click.option(
+    "-r","--redirect",help="HTTP redirect status code", default=302, show_default=True, type=int
+)
+@click.option(
     "-c",
     "--canonical",
     help="Pattern for creation of canonical values",
@@ -139,7 +142,9 @@ def list_value(ctx, scheme, prefix):
 @click.option(
     "-y", "--synonym", default=None, help="This entry is a synonym for this uniq value."
 )
-def add_entry(ctx, scheme, prefix, value, target, canonical, synonym):
+def add_entry(ctx, scheme, prefix, value, target, redirect, canonical, synonym):
+    if redirect < 301 or redirect > 308:
+        raise ValueError("Invalid redirect, must be between 301 and 308")
     session = rslv.lib_rslv.piddefine.get_session(ctx.obj["engine"])
     try:
         definitions = rslv.lib_rslv.piddefine.PidDefinitionCatalog(session)
@@ -148,6 +153,7 @@ def add_entry(ctx, scheme, prefix, value, target, canonical, synonym):
             prefix=prefix,
             value=value,
             target=target,
+            http_code=redirect,
             canonical=canonical,
             synonym_for=synonym,
         )

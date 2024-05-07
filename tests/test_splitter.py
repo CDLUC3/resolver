@@ -125,8 +125,60 @@ split_tests = (
     ),
 )
 
+unsplit_tests = (
+    (
+        {
+            "pid":"ark:/123435/foo/bar?test=value&test2=value",
+            "scheme":"ark",
+            "content":"123435/foo/bar?test=value&test2=value",
+            "prefix":"12345",
+            "value": "foo/bar?test=value&test2=value"
+        },
+        "{pid}",
+        "ark:/123435/foo/bar?test=value&test2=value"
+    ),
+    (
+        {
+            "pid": "ark:/123435/foo/bar?test=value&test2=value",
+            "scheme": "ark",
+            "content": "123435/foo/bar?test=value&test2=value",
+            "prefix": "12345",
+            "value": "foo/bar?test=value&test2=value"
+        },
+        "{scheme}:{content}",
+        "ark:123435/foo/bar?test=value&test2=value"
+    ),
+    (
+        {
+            "pid": "ark:/123435/foo/bar?test=value&test2=value",
+            "scheme": "ark",
+            "content": "123435/foo/bar?test=value&test2=value",
+            "prefix": "12345",
+            "value": "foo/bar?test=value&test2=value"
+        },
+        "{prefix}/{value}",
+        "12345/foo/bar?test=value&test2=value"
+    ),
+    (
+        {
+            "pid": "ark:/123435/foo/bar?test=value&test2=value",
+            "scheme": "ark",
+            "content": "123435/foo/bar?test=value&test2=value",
+            "prefix": "12345",
+            "value": "foo/bar?test=value&test2=value"
+        },
+        "{prefix}/{value_enc}",
+        "12345/foo/bar%3Ftest%3Dvalue%26test2%3Dvalue"
+    ),
+)
+
 @pytest.mark.parametrize("test,expected", split_tests)
 def test_split(test, expected):
     result = rslv.lib_rslv.split_identifier_string(test)
     for k, v in expected.items():
         assert result[k] == expected[k]
+
+@pytest.mark.parametrize("test,template,expected", unsplit_tests)
+def test_unsplit_identifier(test, template, expected):
+    result = rslv.lib_rslv.unsplit_identifier_string(template, test)
+    assert result == expected
