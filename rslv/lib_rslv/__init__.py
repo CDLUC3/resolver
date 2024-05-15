@@ -10,6 +10,15 @@ def load_parser(class_name):
 
 
 def split_identifier_string(pid_str: str) -> typing.Dict[str, typing.Any]:
+    """
+    Split an identifier.
+    ark:/12345/bar =>
+        pid = ark:/12345/bar
+        scheme = ark
+        content = 12345/bar
+        prefix = 12345
+        value = bar
+    """
     pid_str = pid_str.strip()
     parsed = {
         "pid": pid_str,
