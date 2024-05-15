@@ -3,7 +3,7 @@ Provides utility methods for interacting with the legacy N2T service.
 
 This content is not required for operation of rslv and may be removed in the future.
 
-Dependencies for this are installed under the n2t group in poetry.
+Dependencies for this are specified under the n2t group in poetry.
 """
 
 import datetime
