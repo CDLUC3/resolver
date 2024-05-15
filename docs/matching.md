@@ -38,16 +38,16 @@ The provided identifier string is split into several components (Figure 2) by ap
 
 <figure>
 
-            ________content__________ 
-           /                         \
-       ark:12345/some_value/with?extra
-       \_/ \___/ \___________________/
-        |    |           |  
-     scheme  |         value
-           prefix      
+                         ________content_____________ 
+                        /                            \
+       identifier = ark:12345/some_value/with?extra=foo
+                    \_/ \___/ \______________________/
+                     |    |             |  
+                  scheme  |           value
+                        prefix      
            
     scheme = "ark"
-    content = "12345/some_value/with?extra"
+    content = "12345/some_value/with?extra=foo"
     prefix = "12345"
     value = "some_value/with?extra"
 
