@@ -215,10 +215,13 @@ class PidDefinitionCatalog:
 
     def get_metadata(self) -> dict[str, typing.Any]:
         meta = self._session.get(ConfigMeta, 0)
+        m_updated = meta.updated
+        if m_updated is not None:
+            m_updated = m_updated.replace(tzinfo=datetime.timezone.utc)
         return {
             "description": meta.description,
             "created": meta.created.replace(tzinfo=datetime.timezone.utc),
-            "updated": meta.updated.replace(tzinfo=datetime.timezone.utc)
+            "updated": m_updated
         }
 
     def get_max_value_length(self) -> int:
