@@ -151,7 +151,7 @@ class ConfigMeta(Base):
         default=current_time, doc="Time when this configuration was created."
     )
     updated: sqlorm.Mapped[datetime.datetime] = sqlorm.mapped_column(
-        default=None, doc="Time when this configuration was updated."
+        nullable=True, default=None, doc="Time when this configuration was updated."
     )
     max_value_length: sqlorm.Mapped[int] = sqlorm.mapped_column(
         doc="Computed maximum length of value entries"
