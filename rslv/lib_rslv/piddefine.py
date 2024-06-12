@@ -217,8 +217,8 @@ class PidDefinitionCatalog:
         meta = self._session.get(ConfigMeta, 0)
         return {
             "description": meta.description,
-            "created": meta.created,
-            "updated": meta.updated
+            "created": meta.created.replace(tzinfo=datetime.timezone.utc),
+            "updated": meta.updated.replace(tzinfo=datetime.timezone.utc)
         }
 
     def get_max_value_length(self) -> int:
