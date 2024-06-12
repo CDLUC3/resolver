@@ -150,6 +150,9 @@ class ConfigMeta(Base):
     created: sqlorm.Mapped[datetime.datetime] = sqlorm.mapped_column(
         default=current_time, doc="Time when this configuration was created."
     )
+    updated: sqlorm.Mapped[datetime.datetime] = sqlorm.mapped_column(
+        default=current_time, doc="Time when this configuration was updted."
+    )
     max_value_length: sqlorm.Mapped[int] = sqlorm.mapped_column(
         doc="Computed maximum length of value entries"
     )
@@ -206,12 +209,17 @@ class PidDefinitionCatalog:
         result = self._session.execute(max_len_q).fetchone()[0]
         meta = self._session.get(ConfigMeta, 0)
         meta.max_value_length = result
+        meta.updated = current_time()
         self._cached_max_len = result
         self._session.commit()
 
-    def get_metadata(self) -> dict:
+    def get_metadata(self) -> dict[str, typing.Any]:
         meta = self._session.get(ConfigMeta, 0)
-        return {"description": meta.description, "created": meta.created.isoformat()}
+        return {
+            "description": meta.description,
+            "created": meta.created.isoformat(),
+            "updated": meta.updated.isoformat()
+        }
 
     def get_max_value_length(self) -> int:
         if self._cached_max_len > 0:
