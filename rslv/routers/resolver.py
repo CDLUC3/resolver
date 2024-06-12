@@ -1,6 +1,7 @@
 """FastAPI router implementing identifier resolver functionality.
 """
 import contextlib
+import string
 import typing
 import urllib.parse
 import fastapi
@@ -65,7 +66,8 @@ def pid_format(parts, template):
         if v is None:
             v = ""
         _parts[k] = v
-    return template.format(**_parts)
+    return string.Template(template).substitute(_parts)
+    #return template.format(**_parts)
 
 
 @router.get(

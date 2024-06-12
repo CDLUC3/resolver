@@ -50,7 +50,7 @@ echo "SRC = ${src}"
 codebraid \
    pandoc \
   --katex \
-  --from markdown+tex_math_single_backslash \
+  --from markdown+tex_math_single_backslash+all_symbols_escapable \
   --to gfm \
   --toc \
   -s \

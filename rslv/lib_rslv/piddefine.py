@@ -1,3 +1,4 @@
+import contextlib
 import datetime
 import typing
 import sqlalchemy as sqla
@@ -460,6 +461,13 @@ class PidDefinitionCatalog:
 def get_session(engine):
     return sqlalchemy.orm.sessionmaker(bind=engine)()
 
+@contextlib.contextmanager
+def get_catalog(engine):
+    session = get_session(engine)
+    try:
+        yield PidDefinitionCatalog(session)
+    finally:
+        session.close()
 
 def create_database(engine, description: str):
     """

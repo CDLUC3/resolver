@@ -7,13 +7,13 @@ EXAMPLE_PIDS = [
     "foo",
     "foo:1234",
     "foo:1234/bar",
-    "ark:/12345/foo?baz",
-    "doi:10.12345/foo?baz",
+    "ark:/12345/foo?baz=bar",
+    "doi:10.12345/foo?baz=bar",
     "IGSN:AU1243",
     "orcid:0000-0002-5355-2576",
     "z017/biomodels.db:BIOMD0000000048",
     "ark:12148/btv1b8449691v/f29",
-    "ark:/12148/btv1b8449691v/f29"
+    "ark:/12148/btv1b8449691v/f29",
 ]
 
 DEFINITIONS = [
@@ -54,18 +54,18 @@ DEFINITIONS = [
 def initialize():
     engine = sqlalchemy.create_engine("sqlite:///:memory:")
     rslv.lib_rslv.piddefine.create_database(engine, "Examples")
-    catalog = rslv.lib_rslv.piddefine.get_catalog(engine)
-    for defn in DEFINITIONS:
-        catalog.add_as_definition(defn)
+    with rslv.lib_rslv.piddefine.get_session(engine) as session:
+        catalog = rslv.lib_rslv.piddefine.PidDefinitionCatalog(session)
+        for defn in DEFINITIONS:
+            catalog.add_or_update(defn)
     return engine
 
 
 def split_examples():
     parsed = []
     for pid in EXAMPLE_PIDS:
-        ppid = rslv.lib_rslv.ParsedPID(pid=pid)
-        ppid.split()
-        parsed.append(ppid.model_dump(mode="json", exclude={"clean_value", }))
+        ppid = rslv.lib_rslv.split_identifier_string(pid)
+        parsed.append(ppid)
     for p in parsed:
         for k,v in p.items():
             if v is None:
@@ -91,16 +91,21 @@ def definition_table():
 
 def defn_match_table(pids=EXAMPLE_PIDS):
     engine = initialize()
-    catalog = rslv.lib_rslv.piddefine.get_catalog(engine)
-    results = []
-    for pid in pids:
-        ppid = rslv.lib_rslv.ParsedPID(pid=pid)
-        ppid.split()
-        defn = catalog.get_as_definition(ppid, resolve_synonym=True)
-        result = {
-            "PID": f"`{pid}`",
-            "Defn Tag": "" if defn is None else f"`{defn.properties.get('tag')}`"
-        }
-        results.append(result)
-    print(markdown_table(results).set_params(row_sep='markdown', quote=False).get_markdown())
+    with rslv.lib_rslv.piddefine.get_session(engine) as session:
+        catalog = rslv.lib_rslv.piddefine.PidDefinitionCatalog(session)
+        results = []
+        for pid in pids:
+            ppid = rslv.lib_rslv.split_identifier_string(pid)
+            defn = catalog.get(
+                ppid.get("scheme",""),
+                prefix=ppid.get("prefix"),
+                value=ppid.get("value"),
+                resolve_synonym=True
+            )
+            result = {
+                "PID": f"`{pid}`",
+                "Defn Tag": "" if defn is None else f"`{defn.properties.get('tag')}`"
+            }
+            results.append(result)
+        print(markdown_table(results).set_params(row_sep='markdown', quote=False).get_markdown())
 

@@ -23,9 +23,7 @@ def setup_config():
         result = cfg.add(entry)
         print(f"### Added: {result}")
 
-    session = get_session()
-    cfg = rslv.lib_rslv.piddefine.PidDefinitionCatalog(session)
-    try:
+    with rslv.lib_rslv.piddefine.get_catalog(engine) as cfg:
         do_add(
             cfg,
             rslv.lib_rslv.piddefine.PidDefinition(
@@ -74,8 +72,6 @@ def setup_config():
             ),
         )
         cfg.refresh_metadata()
-    finally:
-        session.close()
 
 
 setup_config()
@@ -99,38 +95,34 @@ parse_cases = (
 
 @pytest.mark.parametrize("test,expected", parse_cases)
 def test_parse(test, expected):
-    session = get_session()
-    cfg = rslv.lib_rslv.piddefine.PidDefinitionCatalog(session)
-    try:
+    with rslv.lib_rslv.piddefine.get_catalog(engine) as cfg:
         parts, definition = cfg.parse(test)
         if expected is None:
             assert definition is None
         else:
             assert definition.scheme == expected["scheme"]
             assert definition.prefix == expected["prefix"]
-    finally:
-        session.close()
+            assert definition.value == expected.get("value", '')
 
 
 def test_update():
-    session = get_session()
-    cfg = rslv.lib_rslv.piddefine.PidDefinitionCatalog(session)
-    revised_entry = rslv.lib_rslv.piddefine.PidDefinition(
-        scheme="ark", prefix="12345", value="up", properties={"name": "Frank"}
-    )
-    revised_entry.uniq = rslv.lib_rslv.piddefine.calculate_definition_uniq(
-        revised_entry.scheme, revised_entry.prefix, revised_entry.value
-    )
-    n = cfg.update(revised_entry)
-    assert n == 0
-    revised_entry = None
-    revised_entry = rslv.lib_rslv.piddefine.PidDefinition(
-        scheme="ark", prefix="12345", value="up", properties={"name": "Henry"}
-    )
-    revised_entry.uniq = rslv.lib_rslv.piddefine.calculate_definition_uniq(
-        revised_entry.scheme, revised_entry.prefix, revised_entry.value
-    )
-    n = cfg.update(revised_entry)
-    assert n == 1
-    e = cfg.get_by_uniq(revised_entry.uniq)
-    assert e.properties == revised_entry.properties
+    with rslv.lib_rslv.piddefine.get_catalog(engine) as cfg:
+        revised_entry = rslv.lib_rslv.piddefine.PidDefinition(
+            scheme="ark", prefix="12345", value="up", properties={"name": "Frank"}
+        )
+        revised_entry.uniq = rslv.lib_rslv.piddefine.calculate_definition_uniq(
+            revised_entry.scheme, revised_entry.prefix, revised_entry.value
+        )
+        n = cfg.update(revised_entry)
+        assert n == 0
+        revised_entry = None
+        revised_entry = rslv.lib_rslv.piddefine.PidDefinition(
+            scheme="ark", prefix="12345", value="up", properties={"name": "Henry"}
+        )
+        revised_entry.uniq = rslv.lib_rslv.piddefine.calculate_definition_uniq(
+            revised_entry.scheme, revised_entry.prefix, revised_entry.value
+        )
+        n = cfg.update(revised_entry)
+        assert n == 1
+        e = cfg.get_by_uniq(revised_entry.uniq)
+        assert e.properties == revised_entry.properties

@@ -38,18 +38,18 @@ The provided identifier string is split into several components (Figure 2) by ap
 
 <figure>
 
-                         ________content_____________ 
-                        /                            \
-       identifier = ark:12345/some_value/with?extra=foo
-                    \_/ \___/ \______________________/
-                     |    |             |  
-                  scheme  |           value
-                        prefix      
+                      ________content_____________
+                     /                            \
+    identifier = ark:12345/some_value/with?extra=foo
+                 \_/ \___/ \______________________/
+                  |    |             |
+               scheme  |           value
+                     prefix
            
     scheme = "ark"
     content = "12345/some_value/with?extra=foo"
     prefix = "12345"
-    value = "some_value/with?extra"
+    value = "some_value/with?extra=foo"
 
 <figcaption>
 
@@ -60,14 +60,22 @@ The provided identifier string is split into several components (Figure 2) by ap
 
 Some examples of parsed identifiers follow. `pid` is the input identifier:
 
-``` stderr
-Traceback (most recent call last):
-  File "source.py", line 2, in <module>
-    doc_parts.split_examples()
-  File "~/Documents/Projects/rslv/_docsrc/doc_parts/__init__.py", line 66, in split_examples
-    ppid = rslv.lib_rslv.ParsedPID(pid=pid)
-AttributeError: module 'rslv.lib_rslv' has no attribute 'ParsedPID'
-```
+| pid | scheme | content | prefix | value |
+|----|----|----|----|----|
+| `foo` | `foo` |  |  |  |
+| `foo:1234` | `foo` | `1234` | `1234` |  |
+| `foo:1234/bar` | `foo` | `1234/bar` | `1234` | `bar` |
+| `ark:/12345/foo?baz=bar` | `ark` | `12345/foo?baz=bar` | `12345` | `foo?baz=bar` |
+| `doi:10.12345/foo?baz=bar` | `doi` | `10.12345/foo?baz=bar` | `10.12345` | `foo?baz=bar` |
+| `IGSN:AU1243` | `igsn` | `AU1243` | `AU1243` |  |
+| `orcid:0000-0002-5355-2576` | `orcid` | `0000-0002-5355-2576` | `0000-0002-5355-2576` |  |
+| `z017/biomodels.db:BIOMD0000000048` | `z017/biomodels.db` | `BIOMD0000000048` | `BIOMD0000000048` |  |
+| `ark:12148/btv1b8449691v/f29` | `ark` | `12148/btv1b8449691v/f29` | `12148` | `btv1b8449691v/f29` |
+| `ark:/12148/btv1b8449691v/f29` | `ark` | `12148/btv1b8449691v/f29` | `12148` | `btv1b8449691v/f29` |
+
+> Note
+>
+> The URN pattern (e.g. `urn:uuid:f81d4fae-7dec-11d0-a765-00a0c91e6bf6`) is not currently supported.
 
 ## Matching a Definition
 
@@ -88,4 +96,20 @@ Examples of identifier matching to a set of definitions.
 
 Given the definitions:
 
+| Tag | Scheme | Prefix    | Value | Synonym_for |
+|-----|--------|-----------|-------|-------------|
+| `1` | `ark`  |           |       |             |
+| `2` | `ark`  | `99999`   |       |             |
+| `3` | `ark`  | `99999`   | `fk4` |             |
+| `4` | `ark`  | `99999`   | `fk`  |             |
+| `5` | `ark`  | `example` |       | `ark:99999` |
+| `6` | `bark` |           |       | `ark:`      |
+
 The following matches result:
+
+| PID                   | Defn Tag |
+|-----------------------|----------|
+| `ark:99999/foozle`    | `2`      |
+| `ark:example/foozle`  | `2`      |
+| `ark:99999/fk4qwerty` | `2`      |
+| `ark:99999/fkqwerty`  | `2`      |

@@ -38,19 +38,18 @@ The provided identifier string is split into several components (Figure 2) by ap
 <figure>
 
 ```
-                 
-        ________content__________ 
-       /                         \
-   ark:12345/some_value/with?extra
-   \_/ \___/ \___________________/
-    |    |           |  
- scheme  |         value
-       prefix      
+                  ________content_____________
+                 /                            \
+identifier = ark:12345/some_value/with?extra=foo
+             \_/ \___/ \______________________/
+              |    |             |
+           scheme  |           value
+                 prefix
        
 scheme = "ark"
-content = "12345/some_value/with?extra"
+content = "12345/some_value/with?extra=foo"
 prefix = "12345"
-value = "some_value/with?extra"
+value = "some_value/with?extra=foo"
 ```
 
 <figcaption>
@@ -67,6 +66,9 @@ import doc_parts
 doc_parts.split_examples()
 ```
 
+> Note
+>
+> The URN pattern (e.g. `urn:uuid:f81d4fae-7dec-11d0-a765-00a0c91e6bf6`) is not currently supported.
 
 ## Matching a Definition
 
