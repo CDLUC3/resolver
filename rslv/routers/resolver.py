@@ -182,7 +182,7 @@ def get_resolve(
     for check in ("?", "??", "?info"):
         if request_url.endswith(check):
             identifier = identifier[: -len(check)]
-            return get_info(request, identifier, pid_config=pid_config)
+            return get_info(request, identifier)
     # Get the raw identifier, i.e. the identifier with any accoutrements
     identifier = urllib.parse.unquote(identifier)
     request_url = urllib.parse.unquote(request_url)
