@@ -1,0 +1,17 @@
+@startuml
+!include <C4/C4_Context>
+
+AddRelTag("alternate", $lineStyle = DashedLine())
+
+System(naansp, "NAAN Registry", "The public mirror NAAN registry (naan_reg_public)")
+System(arkr, "ARK NAAN Resolver", "Redirect service for ARK NAANs (arks.org)")
+System_Ext(res, "ARK Resource Resolver", "Associates ARKs with specific resources")
+System(n2t, "N2T","The N2T scheme resolver (n2t.net)")
+Person(user, "User", "Client accessing ARK identified resource")
+Rel(naansp, arkr, "Informs", "configuration")
+Rel(n2t, arkr, "Redirects to")
+Rel(arkr, res, "Redirects to")
+Rel(user, n2t, "Resolve", "https, preferred")
+Rel(user, arkr, "Resolve", "https", $tags="alternate")
+Rel(user, res, "Resolve", "https", $tags="alternate")
+@enduml
