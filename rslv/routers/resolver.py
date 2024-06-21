@@ -193,8 +193,8 @@ def get_resolve(
         # We have a match from the definition catalog.
         # Redirect the response, but include our gathered info in the body
         # to assist with debugging.
-        pid_parts["target"] = definition.target.format(**pid_parts)
-        pid_parts["canonical"] = definition.canonical.format(**pid_parts)
+        pid_parts["target"] = pid_format(pid_parts, definition.target)
+        pid_parts["canonical"] = pid_format(pid_parts, definition.canonical)
         pid_parts["status_code"] = definition.http_code
         headers = {"Location": pid_parts["target"]}
         return fastapi.responses.JSONResponse(
