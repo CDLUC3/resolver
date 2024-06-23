@@ -79,8 +79,10 @@ def identifiers_in_text(text: str) -> typing.Generator[dict, None, int]:
         yield pid
     return count
 
-def remove_hyphens(text: str) -> str:
+def remove_hyphens(text: typing.Optional[str]) -> typing.Optional[str]:
     # removes hyphens, but not from query part...
+    if text is None:
+        return text
     ab = text.split("?", 1)
     a = ab[0].replace("-", "")
     if len(ab) < 2:
