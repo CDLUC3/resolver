@@ -24,9 +24,7 @@ ruamel-yaml = "^0.18.6"
 py-markdown-table = "^0.4.0"
 
 [tool.poetry.scripts]
-rslv = "rslv.manage:main"
-crne = "scripts.crne:main"
-compare_ezid_n2t_naans = "scripts.compare_ezid_n2t_naans:main"
+rslv = "rslv.__main__:main"
 
 [tool.poetry.group.cli.dependencies]
 click = "^8"

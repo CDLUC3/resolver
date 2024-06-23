@@ -1,6 +1,14 @@
 import importlib
+import re
 import typing
 import urllib.parse
+
+
+# regexp for matching a general identifier pattern of scheme:content
+RE_IDENTIFIER = re.compile(
+    r"\b(?P<PID>(?P<scheme>[A-Za-z0-9/;.\-]+):/?(?P<content>\S+))\b",
+    re.IGNORECASE | re.MULTILINE
+)
 
 
 def load_parser(class_name):
@@ -57,3 +65,16 @@ def unsplit_identifier_string(template_str:str, pid_parts:dict) -> str:
     encoded_pid_parts["prefix_enc"] = urllib.parse.quote(pid_parts["prefix"])
     encoded_pid_parts["value_enc"] = urllib.parse.quote(pid_parts["value"])
     return template_str.format(**encoded_pid_parts)
+
+
+def identifiers_in_text(text: str) -> typing.Generator[dict, None, int]:
+    count = 0
+    for match in RE_IDENTIFIER.finditer(text):
+        pid = {
+            "pid": match.group("PID"),
+            "scheme": match.group('scheme'),
+            "content": match.group('content'),
+        }
+        count += 1
+        yield pid
+    return count

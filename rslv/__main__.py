@@ -10,7 +10,6 @@ import click
 import httpx
 import sqlalchemy
 
-import rslv.lib_rslv.n2tutils
 import rslv.lib_rslv.piddefine
 import rslv.config
 
@@ -77,12 +76,18 @@ def main(ctx, verbosity):
 @click.pass_context
 @click.argument("description")
 def initialize_configuration(ctx, description):
+    """Initializes an empty RSLV configuration database.
+
+    The provided description is included in the metadata for the database.
+    """
     rslv.lib_rslv.piddefine.create_database(ctx.obj["engine"], description)
 
 
 @main.command("schemes")
 @click.pass_context
 def list_schemes(ctx):
+    """List the schemes registered in the database.
+    """
     session = rslv.lib_rslv.piddefine.get_session(ctx.obj["engine"])
     try:
         definitions = rslv.lib_rslv.piddefine.PidDefinitionCatalog(session)
@@ -97,6 +102,8 @@ def list_schemes(ctx):
 @click.pass_context
 @click.argument("scheme")
 def list_prefixes(ctx, scheme):
+    """List the prefixes for the specified scheme.
+    """
     session = rslv.lib_rslv.piddefine.get_session(ctx.obj["engine"])
     try:
         definitions = rslv.lib_rslv.piddefine.PidDefinitionCatalog(session)
@@ -112,6 +119,8 @@ def list_prefixes(ctx, scheme):
 @click.argument("scheme")
 @click.argument("prefix")
 def list_value(ctx, scheme, prefix):
+    """List the values of the specified scheme, prefix combination.
+    """
     session = rslv.lib_rslv.piddefine.get_session(ctx.obj["engine"])
     try:
         definitions = rslv.lib_rslv.piddefine.PidDefinitionCatalog(session)
@@ -143,6 +152,9 @@ def list_value(ctx, scheme, prefix):
     "-y", "--synonym", default=None, help="This entry is a synonym for this uniq value."
 )
 def add_entry(ctx, scheme, prefix, value, target, redirect, canonical, synonym):
+    """
+    Add an entry to the configuration database.
+    """
     if redirect < 301 or redirect > 308:
         raise ValueError("Invalid redirect, must be between 301 and 308")
     session = rslv.lib_rslv.piddefine.get_session(ctx.obj["engine"])
@@ -163,6 +175,8 @@ def add_entry(ctx, scheme, prefix, value, target, redirect, canonical, synonym):
     finally:
         session.close()
 
+'''
+DEPRECATED - moved to arksorg-site
 
 @main.command("naans")
 @click.pass_context
@@ -266,8 +280,10 @@ def load_public_naans(ctx, url, ezid_naans):
         definitions.refresh_metadata()
     finally:
         session.close()
+'''
 
-
+'''
+DEPRECATED - functionality moved to N2T
 @main.command("naan_shoulders")
 @click.pass_context
 @click.option(
@@ -308,6 +324,7 @@ def load_naan_shoulders(ctx, source):
         definitions.refresh_metadata()
     finally:
         session.close()
+'''
 
 
 if __name__ == "__main__":

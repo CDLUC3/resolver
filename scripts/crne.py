@@ -30,8 +30,7 @@ async def get_response(session, url):
 async def do_work(ark):
     bases = [
         "https://n2t.net/{pid}",
-        "https://rslv.xyz/{pid}",
-        "https://ezid.cdlib.org/{pid}",
+        "https://uc3-ezid-n2t-prd.cdlib.org/{pid}",
     ]
     urls = [base.format(pid=ark) for base in bases]
     session = httpx.AsyncClient()

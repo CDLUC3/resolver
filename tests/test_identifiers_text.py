@@ -1,6 +1,6 @@
 import pytest
 
-import rslv.lib_rslv.n2tutils
+import rslv.lib_rslv
 
 test_cases = (
     ("", ()),
@@ -57,7 +57,7 @@ def test_pid_in_list():
 @pytest.mark.parametrize("input,expected", test_cases)
 def test_match_in_text(input, expected):
     matches = []
-    for pid in rslv.lib_rslv.n2tutils.identifiers_in_text(input):
+    for pid in rslv.lib_rslv.identifiers_in_text(input):
         matches.append(pid)
         assert pid_in_list(expected, pid)
 

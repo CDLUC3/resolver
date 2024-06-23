@@ -410,6 +410,7 @@ class PidDefinitionCatalog:
 
     def parse(self, pid_str: str, resolve_synonym:bool=True) -> typing.Tuple[dict, typing.Optional[PidDefinition]]:
         parts = rslv.lib_rslv.split_identifier_string(pid_str)
+        parts["suffix"] = ""
         pid_definition = self.get(
             scheme=parts["scheme"], prefix=parts["prefix"], value=parts["value"], resolve_synonym=resolve_synonym
         )
@@ -426,6 +427,12 @@ class PidDefinitionCatalog:
                 f"{pid_definition.prefix}/{pd_value}"
             )
             parts["suffix"] = pid_str[suffix_pos:]
+        # Hack alert - need to deal with the oddness of ARK identifiers ignoring hyphens.
+        if parts["scheme"] == "ark":
+            # remove hyphens from the content and value portions
+            parts["content"] = parts["content"].replace("-", "")
+            parts["value"] = parts["value"].replace("-", "")
+            parts["suffix"] = parts["suffix"].replace("-", "")
         return parts, pid_definition
 
     def list_schemes(self, valid_targets_only:bool=False):
