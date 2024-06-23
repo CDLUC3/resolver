@@ -87,5 +87,5 @@ def remove_hyphens(text: typing.Optional[str]) -> typing.Optional[str]:
     a = ab[0].replace("-", "")
     if len(ab) < 2:
         return a
-    return f"{a}{ab[1]}"
+    return f"{a}?{ab[1]}"
 
