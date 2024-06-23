@@ -85,6 +85,8 @@ def remove_hyphens(text: typing.Optional[str]) -> typing.Optional[str]:
         return text
     ab = text.split("?", 1)
     a = ab[0].replace("-", "")
+    # while here, clean up mutiple sequential slashes
+    a = re.sub('/+','/', a)
     if len(ab) < 2:
         return a
     return f"{a}?{ab[1]}"
