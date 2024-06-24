@@ -70,6 +70,11 @@ def pid_format(parts, template):
     #return template.format(**_parts)
 
 
+@router.head(
+    "/.info",
+    summary="Retrieve information about the service.",
+    response_class=rslv.routers.PrettyJSONResponse
+)
 @router.get(
     "/.info",
     summary="Retrieve information about the service.",
