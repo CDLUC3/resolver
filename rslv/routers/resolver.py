@@ -209,9 +209,12 @@ def get_resolve(
         # Redirect the response, but include our gathered info in the body
         # to assist with debugging.
         pid_parts["target"] = pid_format(pid_parts, definition.target)
+        _target = pid_parts["target"]
+        if pid_parts["value"] in [None, "", ]:
+            _target = pid_format(pid_parts, "/.info/${pid}")
         pid_parts["canonical"] = pid_format(pid_parts, definition.canonical)
         pid_parts["status_code"] = definition.http_code
-        headers = {"Location": pid_parts["target"]}
+        headers = {"Location": _target}
         return fastapi.responses.JSONResponse(
             content=pid_parts,
             headers=headers,
