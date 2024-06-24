@@ -121,7 +121,7 @@ def get_info(
     identifier = identifier.lstrip(" /:.;,")
     # Nothing provided, return information about this service.
     if identifier in ("", "{identifier}"):
-        return get_service_info(request, pid_config=pid_config)
+        return get_service_info(request)
     # Starlette or fastapi will split the value on the query part, so instead we grab the
     # raw request url and grab the full identifier string ourselves
     request_url = str(request.url)
