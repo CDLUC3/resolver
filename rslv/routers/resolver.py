@@ -88,6 +88,11 @@ def get_service_info(
     }
 
 
+@router.head(
+    "/.info/{identifier:path}",
+    summary="Retrieve information about the provided identifier.",
+    response_class=rslv.routers.PrettyJSONResponse
+)
 @router.get(
     "/.info/{identifier:path}",
     summary="Retrieve information about the provided identifier.",
@@ -161,18 +166,12 @@ def get_info(
         status_code=404
     )
 
+
 @router.head(
-    "/.info/{identifier:path}",
-    summary="Retrieve information about the provided identifier.",
+    "/{identifier:path}",
+    summary="Redirect to the identified resource or present resolver information.",
     response_class=rslv.routers.PrettyJSONResponse
 )
-def head_info(
-    request: fastapi.Request,
-    identifier: typing.Optional[str] = None,
-):
-    return get_info(request, identifier)
-
-
 @router.get(
     "/{identifier:path}",
     summary="Redirect to the identified resource or present resolver information.",
@@ -220,16 +219,4 @@ def get_resolve(
         content=pid_parts,
         status_code=404
     )
-
-
-@router.head(
-    "/{identifier:path}",
-    summary="Redirect to the identified resource or present resolver information.",
-    response_class=rslv.routers.PrettyJSONResponse
-)
-def head_resolve(
-    request: fastapi.Request,
-    identifier: typing.Optional[str] = None,
-):
-    return get_resolve(request=request, identifier=identifier)
 
