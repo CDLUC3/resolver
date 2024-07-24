@@ -37,6 +37,7 @@ class Settings(pydantic_settings.BaseSettings):
     static_dir: str = os.path.join(BASE_FOLDER, "static")
     template_dir: str = os.path.join(BASE_FOLDER, "templates")
     log_filename: typing.Optional[str] = None
+    service_pattern: typing.Optional[str] = None
 
 
 def load_settings():
@@ -46,4 +47,3 @@ def load_settings():
     return Settings()
 
 
-#settings = load_settings()
