@@ -159,6 +159,7 @@ resolve_cases = (
     ("purl:dc/terms/creator?info", {"target": "http://purl.org/dc/terms/creator", "status": 200, "tag": 8}),
     ("http://testserver/ark:99999/hhdd", {"target": "https://example.com/info/99999/hhdd", "status": 302}),
     ("http://example.com/ark:99999/hhdd", {"target": "https://example.com/info/99999/hhdd", "status": 302}),
+    ("ark:12345/up", {"target":"/.info/ark:12345/up", "status": 302})
 )
 
 @pytest.mark.parametrize("test,expected", resolve_cases)
@@ -173,4 +174,3 @@ def test_resolve_schemes(test, expected):
         assert _match["properties"]["tag"] == expected["tag"]
     else:
         assert response.headers.get("location") == expected["target"]
-    #assert response.status_code == 200

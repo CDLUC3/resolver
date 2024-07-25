@@ -216,7 +216,9 @@ def get_resolve(
     # to assist with debugging.
     pid_parts["target"] = pid_format(pid_parts, definition.target)
     _target = pid_parts["target"]
-    if pid_parts["value"] in [None, "", ]:
+    if pid_parts["value"] in [None, ""]:
+        _target = pid_format(pid_parts, "/.info/${pid}")
+    if request.app.state.settings.auto_introspection and pid_parts["value"] == definition.value:
         _target = pid_format(pid_parts, "/.info/${pid}")
     pid_parts["canonical"] = pid_format(pid_parts, definition.canonical)
     pid_parts["status_code"] = definition.http_code

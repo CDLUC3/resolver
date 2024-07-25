@@ -37,8 +37,14 @@ class Settings(pydantic_settings.BaseSettings):
     static_dir: str = os.path.join(BASE_FOLDER, "static")
     template_dir: str = os.path.join(BASE_FOLDER, "templates")
     log_filename: typing.Optional[str] = None
+    # Pattern to match this service URL endpoint, and if requests
+    # match then trim the service url from the PID
+    # For not uncommon situations where pid = "https://n2t.net/ark:/12345/foo"
     service_pattern: typing.Optional[str] = None
-
+    # If pid value matches the definition value, then assume introspection.
+    # Note that this should be set False on services offering one-to-one matching of
+    # definitions to PIDs. For N2T and arks.org this sould be true to match legacy behavior.
+    auto_introspection: bool = True
 
 def load_settings():
     rslv_env_file = os.environ.get("RSLV_ENV_FILE", None)
