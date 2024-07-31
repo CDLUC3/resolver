@@ -8,6 +8,8 @@ this script is run. That file is used as input when loading NAAN
 configuration using the `rslv naans` command (implemented in manage.py).
 """
 
+raise NotImplementedError("This script is deprecated")
+
 import json
 import os
 import re

@@ -29,6 +29,7 @@ async def get_response(session, url):
 
 async def do_work(ark):
     bases = [
+        "https://legacy-n2t.net/{pid}",
         "https://n2t.net/{pid}",
         "https://uc3-ezid-n2t-prd.cdlib.org/{pid}",
     ]

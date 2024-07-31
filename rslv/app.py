@@ -9,9 +9,6 @@ about the identifier or redirect the user to the registered target.
 """
 import contextlib
 import functools
-import logging.config
-import os
-import sys
 import typing
 
 import fastapi

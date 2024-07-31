@@ -82,7 +82,7 @@ class PidDefinition(Base):
         default=302, doc="HTTP status code for response."
     )
     canonical: sqlorm.Mapped[str] = sqlorm.mapped_column(
-        default="{pid}", doc="Pattern for canonical string representation."
+        default="${pid}", doc="Pattern for canonical string representation."
     )
     properties: sqlorm.Mapped[dict[str, typing.Any]] = sqlorm.mapped_column(
         type_=sqlalchemy.types.JSON,
@@ -419,6 +419,15 @@ class PidDefinitionCatalog:
         if pid_definition.splitter is not None:
             # TODO: implement additional split
             pass
+        was_synonym = False
+        if parts['scheme'] != pid_definition.scheme:
+            was_synonym = True
+            parts["scheme"] = pid_definition.scheme
+        if pid_definition.prefix is not None:
+            if parts['prefix'] != pid_definition.prefix:
+                was_synonym = True
+                parts["prefix"] = pid_definition.prefix
+
         # Compute the suffix
         _content = parts.get("content", None)
         if _content is not None:
@@ -427,6 +436,7 @@ class PidDefinitionCatalog:
                 f"{pid_definition.prefix}/{pd_value}"
             )
             parts["suffix"] = pid_str[suffix_pos:]
+
         # Hack alert - need to deal with the oddness of ARK identifiers ignoring hyphens.
         if parts["scheme"] == "ark":
             # remove hyphens from the content and value portions, but not from the query portion, if present...
@@ -450,7 +460,7 @@ class PidDefinitionCatalog:
     def list_prefixes(self, scheme: str):
         q = (
             sqlalchemy.select(PidDefinition.prefix)
-            .distinct(PidDefinition.prefix)
+            .distinct()
             .where(
                 sqlalchemy.and_(
                     PidDefinition.scheme == scheme, PidDefinition.prefix != ""
@@ -463,7 +473,9 @@ class PidDefinitionCatalog:
     def list_values(self, scheme: str, prefix: str):
         q = (
             sqlalchemy.select(PidDefinition.value)
-            .distinct(PidDefinition.value)
+            # don't include field name in distinct
+            # https://stackoverflow.com/questions/17223174/returning-distinct-rows-in-sqlalchemy-with-sqlite
+            .distinct()
             .where(
                 sqlalchemy.and_(
                     PidDefinition.scheme == scheme,
