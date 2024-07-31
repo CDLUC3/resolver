@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 import fastapi.testclient
@@ -51,7 +52,7 @@ def setup_config():
             cfg,
             rslv.lib_rslv.piddefine.PidDefinition(
                 scheme="ark",
-                target="https://example.com/info/ark/${pid}",
+                target="https://example.com/${pid}",
                 canonical="ark:/${prefix}/${value}",
                 properties={"tag": 1},
             ),
@@ -61,7 +62,7 @@ def setup_config():
             rslv.lib_rslv.piddefine.PidDefinition(
                 scheme="ark",
                 prefix="99999",
-                target="https://example.com/info/99999/${value}",
+                target="https://example.99999.com/info/${content}",
                 properties={"tag": 2},
             ),
         )
@@ -71,7 +72,7 @@ def setup_config():
                 scheme="ark",
                 prefix="99999",
                 value="fk4",
-                target="/.info/${pid}",
+                target="https://fk4.example.com/${suffix}",
                 properties={"tag": 3},
             ),
         )
@@ -101,16 +102,6 @@ def setup_config():
                 scheme="bark",
                 synonym_for="ark:",
                 properties={"tag": 6},
-            ),
-        )
-        do_add(
-            cfg,
-            rslv.lib_rslv.piddefine.PidDefinition(
-                scheme="ark",
-                prefix="12345",
-                value="up",
-                target="/.info/${pid}",
-                properties={"tag": 7}
             ),
         )
         do_add(
@@ -147,30 +138,41 @@ info_cases = (
 
 
 resolve_cases = (
-    ("ark:", {"target":"/.info/ark:", "status":302}),
-    ("ARK:", {"target":"/.info/ARK:", "status":302}),
-    ("ark:99999", {"target":"/.info/ark:99999", "status":302}),
-    ("ark:99999/foo", {"target":"https://example.com/info/99999/foo", "status":302}),
-    ("bark:99999/hhdd", {"target":"https://example.com/info/99999/hhdd", "status": 302}),
+    ("ark:", {"target":"https://example.com/ark:", "status":200, "prefixes":["99999","example",]}),
+    ("ARK:", {"target":"https://example.com/ARK:", "status":200}),
+    ("ark:99999", {"target":"https://example.99999.com/info/99999", "status":200, "values": ["fk", "fk4",]}),
+    ("ark:99999/foo", {"target":"https://example.99999.com/info/99999/foo", "status":302}),
+    ("bark:99999/hhdd", {"target":"https://example.99999.com/info/99999/hhdd", "status": 302}),
     ("ark:99999/fkhhdd", {"target": "http://fk.example.com/ark:99999/fkhhdd", "status": 302}),
-    ("ark:99999/fkhhdd?info", {"target": "/.info/ark:99999/fkhhdd", "status": 200, "tag": 4}),
+    ("ark:99999/fkhhdd?info", {"target": "http://fk.example.com/ark:99999/fkhhdd", "status": 200, "tag": 4}),
+    ("ark:99999/fk", {"target": "http://fk.example.com/ark:99999/fk", "status": 200}),
+    ("ark:99999/fk4", {"target": "https://fk4.example.com/", "status": 200}),
+    ("ark:99999/fk4foo", {"target": "https://fk4.example.com/foo", "status": 302}),
     ("purl:dc/terms/creator", {"target": "http://purl.org/dc/terms/creator", "status": 302, "tag": 4}),
     ("purl:dc/terms/creator??", {"target": "http://purl.org/dc/terms/creator", "status": 200, "tag": 8}),
     ("purl:dc/terms/creator?info", {"target": "http://purl.org/dc/terms/creator", "status": 200, "tag": 8}),
-    ("http://testserver/ark:99999/hhdd", {"target": "https://example.com/info/99999/hhdd", "status": 302}),
-    ("http://example.com/ark:99999/hhdd", {"target": "https://example.com/info/99999/hhdd", "status": 302}),
-    ("ark:12345/up", {"target":"/.info/ark:12345/up", "status": 302})
+    ("http://testserver/ark:99999/hhdd", {"target": "https://example.99999.com/info/99999/hhdd", "status": 302}),
+    ("http://example.com/ark:99999/hhdd", {"target": "https://example.99999.com/info/99999/hhdd", "status": 302}),
+    ("ark:12345/up", {"target":"https://example.com/ark:12345/up", "status": 302}),
+    ("ark:12345/up?info", {"target":"https://example.com/ark:12345/up", "status": 200}),
+    ("ark:/12345", {"target": "https://example.com/ark:/12345", "status": 200}),
+    ("ark:12345", {"target": "https://example.com/ark:12345", "status": 200}),
 )
 
 @pytest.mark.parametrize("test,expected", resolve_cases)
 def test_resolve_schemes(test, expected):
     client = fastapi.testclient.TestClient(rslv.app.app, follow_redirects=False)
-
     response = client.get(f"/{test}")
     _match = response.json()
-    #L.info(json.dumps(_match, indent=2))
+    L.info(json.dumps(_match, indent=2))
     assert response.status_code == expected["status"]
     if response.status_code == 200:
-        assert _match["properties"]["tag"] == expected["tag"]
+        assert _match["target"] == expected["target"]
+        if "values" in expected:
+            for v in expected["values"]:
+                assert v in _match["definition"]["values"]
+        if "prefixes" in expected:
+            for v in expected["prefixes"]:
+                assert v in _match["definition"]["prefixes"]
     else:
         assert response.headers.get("location") == expected["target"]
