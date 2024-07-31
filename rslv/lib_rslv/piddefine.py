@@ -473,7 +473,9 @@ class PidDefinitionCatalog:
     def list_values(self, scheme: str, prefix: str):
         q = (
             sqlalchemy.select(PidDefinition.value)
-            .distinct(PidDefinition.value)
+            # don't include field name in distinct
+            # https://stackoverflow.com/questions/17223174/returning-distinct-rows-in-sqlalchemy-with-sqlite
+            .distinct()
             .where(
                 sqlalchemy.and_(
                     PidDefinition.scheme == scheme,
