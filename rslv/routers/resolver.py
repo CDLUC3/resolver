@@ -216,10 +216,17 @@ def get_resolve(
     # to assist with debugging.
     pid_parts["target"] = pid_format(pid_parts, definition.target)
     _target = pid_parts["target"]
+    # If there's no value component in the PID, then return the information
+    # this service has about the identifier.
     if pid_parts["value"] in [None, ""]:
-        _target = pid_format(pid_parts, "/.info/${pid}")
+        return handle_get_info(request, cleaned_identifier)
+    # If the PID value part matches the value part of the matched definition,
+    # then return the definition information. This is sketchy behavior but included
+    # here because it follows the legacy N2T behavior. It can be disabled through
+    # the auto_introspection configuration boolean value.
     if request.app.state.settings.auto_introspection and pid_parts["value"] == definition.value:
-        _target = pid_format(pid_parts, "/.info/${pid}")
+        return handle_get_info(request, cleaned_identifier)
+    # OK, past all the edge cases, redirect the client to the registered target.
     pid_parts["canonical"] = pid_format(pid_parts, definition.canonical)
     pid_parts["status_code"] = definition.http_code
     headers = {"Location": _target}
