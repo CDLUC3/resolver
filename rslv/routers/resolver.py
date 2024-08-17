@@ -54,6 +54,7 @@ class CleanedIdentifierRequest:
                 has_service_url = True
         request_url = urllib.parse.unquote(request_url)
         requested_identifier = request_url[request_url.find(cleaned) :]
+        _original = requested_identifier
 
         # ARK resolvers have behavior of returning an
         # introspection ("inflection") when the URL ends with
@@ -61,11 +62,11 @@ class CleanedIdentifierRequest:
         # to determine this since it is non-standard behavior.
         for check in ("??", "?info", "?", ):
             if request_url.endswith(check):
-                if cleaned.endswith(check):
-                    cleaned = cleaned[:-len(check)]
+                if requested_identifier.endswith(check):
+                    requested_identifier = requested_identifier[:-len(check)]
                 is_introspection = True
                 break
-        return CleanedIdentifierRequest(original=requested_identifier, cleaned=cleaned, is_introspection=is_introspection, has_service_url=has_service_url)
+        return CleanedIdentifierRequest(original=_original, cleaned=requested_identifier, is_introspection=is_introspection, has_service_url=has_service_url)
 
 
 @router.head(
@@ -180,6 +181,18 @@ def get_resolve(
     request: fastapi.Request,
     identifier: typing.Optional[str] = None,
 ):
+    '''
+    Redirect to the identified resource or present identifier information.
+
+    Args:
+        request: The starlette / FastAPI request object
+        identifier: The identifier from the URL pattern match.
+
+    Returns:
+        A HTTP response that either redirects client to registered target or presents information
+        about the provided identifier.
+
+    '''
     if not hasattr(request.app.state, "settings"):
         raise fastapi.HTTPException(status_code=500, detail="Settings are not accessible from handlers. Check server implementation.")
     if not hasattr(request.state, "dbsession"):
