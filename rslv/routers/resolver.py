@@ -180,6 +180,18 @@ def get_resolve(
     request: fastapi.Request,
     identifier: typing.Optional[str] = None,
 ):
+    '''
+    Redirect to the identified resource or present identifier information.
+
+    Args:
+        request: The starlette / FastAPI request object
+        identifier: The identifier from the URL pattern match.
+
+    Returns:
+        A HTTP response that either redirects client to registered target or presents information
+        about the provided identifier.
+
+    '''
     if not hasattr(request.app.state, "settings"):
         raise fastapi.HTTPException(status_code=500, detail="Settings are not accessible from handlers. Check server implementation.")
     if not hasattr(request.state, "dbsession"):
