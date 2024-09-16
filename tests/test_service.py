@@ -138,34 +138,46 @@ info_cases = (
 
 
 resolve_cases = (
-    ("ark:", {"target":"https://example.com/ark:", "status":200, "prefixes":["99999","example",]}),
-    ("ARK:", {"target":"https://example.com/ARK:", "status":200}),
-    ("ark:99999", {"target":"https://example.99999.com/info/99999", "status":200, "values": ["fk", "fk4",]}),
-    ("ark:99999/foo", {"target":"https://example.99999.com/info/99999/foo", "status":302}),
-    ("bark:99999/hhdd", {"target":"https://example.99999.com/info/99999/hhdd", "status": 302}),
-    ("ark:99999/fkhhdd", {"target": "http://fk.example.com/ark:99999/fkhhdd", "status": 302}),
-    ("ark:99999/fkhhdd?info", {"target": "http://fk.example.com/ark:99999/fkhhdd", "status": 200, "tag": 4}),
-    ("ark:99999/fkhhdd?query=param&q2=2", {"target": "http://fk.example.com/ark:99999/fkhhdd?query=param&q2=2", "status": 302, "tag": 4}),
-    ("ark:99999/fk", {"target": "http://fk.example.com/ark:99999/fk", "status": 200}),
-    ("ark:99999/fk4", {"target": "https://fk4.example.com/", "status": 200}),
-    ("ark:99999/fk4foo", {"target": "https://fk4.example.com/foo", "status": 302}),
-    ("purl:dc/terms/creator", {"target": "http://purl.org/dc/terms/creator", "status": 302, "tag": 4}),
-    ("purl:dc/terms/creator?query=param&q2=2", {"target": "http://purl.org/dc/terms/creator?query=param&q2=2", "status": 302, "tag": 4}),
-    ("purl:dc/terms/creator??", {"target": "http://purl.org/dc/terms/creator", "status": 200, "tag": 8}),
-    ("purl:dc/terms/creator?info", {"target": "http://purl.org/dc/terms/creator", "status": 200, "tag": 8}),
-    ("http://testserver/ark:99999/hhdd", {"target": "https://example.99999.com/info/99999/hhdd", "status": 302}),
-    ("http://example.com/ark:99999/hhdd", {"target": "https://example.99999.com/info/99999/hhdd", "status": 302}),
-    ("ark:12345/up", {"target":"https://example.com/ark:12345/up", "status": 302}),
-    ("ark:12345/upextra?query=param&q2=2", {"target":"https://example.com/ark:12345/upextra?query=param&q2=2", "status": 302}),
-    ("ark:12345/up?info", {"target":"https://example.com/ark:12345/up", "status": 200}),
-    ("ark:/12345", {"target": "https://example.com/ark:/12345", "status": 200}),
-    ("ark:12345", {"target": "https://example.com/ark:12345", "status": 200}),
+    (["ark:", "GET"], {"target":"https://example.com/ark:", "status":200, "prefixes":["99999","example",]}),
+    (["ark:", "POST"], {"target":"https://example.com/ark:", "status":200, "prefixes":["99999","example",]}),
+    (["ark:", "PUT"], {"target":"https://example.com/ark:", "status":200, "prefixes":["99999","example",]}),
+    (["ark:", "DELETE"], {"target":"https://example.com/ark:", "status":200, "prefixes":["99999","example",]}),
+    (["ARK:", "GET"], {"target":"https://example.com/ARK:", "status":200}),
+    (["ark:99999", "GET"], {"target":"https://example.99999.com/info/99999", "status":200, "values": ["fk", "fk4",]}),
+    (["ark:99999", "POST"], {"target":"https://example.99999.com/info/99999", "status":200, "values": ["fk", "fk4",]}),
+    (["ark:99999", "PUT"], {"target":"https://example.99999.com/info/99999", "status":200, "values": ["fk", "fk4",]}),
+    (["ark:99999", "DELETE"], {"target":"https://example.99999.com/info/99999", "status":200, "values": ["fk", "fk4",]}),
+    (["ark:99999/foo", "GET"], {"target":"https://example.99999.com/info/99999/foo", "status":302}),
+    (["ark:99999/foo", "POST"], {"target":"https://example.99999.com/info/99999/foo", "status":307}),
+    (["ark:99999/foo", "PUT"], {"target":"https://example.99999.com/info/99999/foo", "status":307}),
+    (["ark:99999/foo", "DELETE"], {"target":"https://example.99999.com/info/99999/foo", "status":307}),
+    (["bark:99999/hhdd", "GET"], {"target":"https://example.99999.com/info/99999/hhdd", "status": 302}),
+    (["ark:99999/fkhhdd", "GET"], {"target": "http://fk.example.com/ark:99999/fkhhdd", "status": 302}),
+    (["ark:99999/fkhhdd?info", "GET"], {"target": "http://fk.example.com/ark:99999/fkhhdd", "status": 200, "tag": 4}),
+    (["ark:99999/fkhhdd?query=param&q2=2", "GET"], {"target": "http://fk.example.com/ark:99999/fkhhdd?query=param&q2=2", "status": 302, "tag": 4}),
+    (["ark:99999/fkhhdd?query=param&q2=2", "POST"], {"target": "http://fk.example.com/ark:99999/fkhhdd?query=param&q2=2", "status": 307, "tag": 4}),
+    (["ark:99999/fkhhdd?query=param&q2=2", "PUT"], {"target": "http://fk.example.com/ark:99999/fkhhdd?query=param&q2=2", "status": 307, "tag": 4}),
+    (["ark:99999/fkhhdd?query=param&q2=2", "DELETE"], {"target": "http://fk.example.com/ark:99999/fkhhdd?query=param&q2=2", "status": 307, "tag": 4}),
+    (["ark:99999/fk", "GET"], {"target": "http://fk.example.com/ark:99999/fk", "status": 200}),
+    (["ark:99999/fk4", "GET"], {"target": "https://fk4.example.com/", "status": 200}),
+    (["ark:99999/fk4foo", "GET"], {"target": "https://fk4.example.com/foo", "status": 302}),
+    (["purl:dc/terms/creator", "GET"], {"target": "http://purl.org/dc/terms/creator", "status": 302, "tag": 4}),
+    (["purl:dc/terms/creator?query=param&q2=2", "GET"], {"target": "http://purl.org/dc/terms/creator?query=param&q2=2", "status": 302, "tag": 4}),
+    (["purl:dc/terms/creator??", "GET"], {"target": "http://purl.org/dc/terms/creator", "status": 200, "tag": 8}),
+    (["purl:dc/terms/creator?info", "GET"], {"target": "http://purl.org/dc/terms/creator", "status": 200, "tag": 8}),
+    (["http://testserver/ark:99999/hhdd", "GET"], {"target": "https://example.99999.com/info/99999/hhdd", "status": 302}),
+    (["http://example.com/ark:99999/hhdd", "GET"], {"target": "https://example.99999.com/info/99999/hhdd", "status": 302}),
+    (["ark:12345/up", "GET"], {"target":"https://example.com/ark:12345/up", "status": 302}),
+    (["ark:12345/upextra?query=param&q2=2", "GET"], {"target":"https://example.com/ark:12345/upextra?query=param&q2=2", "status": 302}),
+    (["ark:12345/up?info", "GET"], {"target":"https://example.com/ark:12345/up", "status": 200}),
+    (["ark:/12345", "GET"], {"target": "https://example.com/ark:/12345", "status": 200}),
+    (["ark:12345", "GET"], {"target": "https://example.com/ark:12345", "status": 200}),
 )
 
 @pytest.mark.parametrize("test,expected", resolve_cases)
 def test_resolve_schemes(test, expected):
     client = fastapi.testclient.TestClient(rslv.app.app, follow_redirects=False)
-    response = client.get(f"/{test}")
+    response = client.request(test[1], f"/{test[0]}")
     _match = response.json()
     L.info(json.dumps(_match, indent=2))
     assert response.status_code == expected["status"]
@@ -179,3 +191,4 @@ def test_resolve_schemes(test, expected):
                 assert v in _match["definition"]["prefixes"]
     else:
         assert response.headers.get("location") == expected["target"]
+
