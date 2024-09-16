@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "rslv"
-version = "0.7.1"
+version = "0.8.0"
 description = "Provides an identifier resolver service in FastAPI."
 authors = ["datadave <605409+datadavev@users.noreply.github.com>"]
 license = "MIT"
@@ -12,6 +12,7 @@ fastapi = "^0"
 pydantic-settings = "^2"
 sqlalchemy = "^2"
 jinja2 = "^3"
+async-fastapi-jwt-auth = {extras = ["asymmetric"], version = "^0.6.6"}
 
 [tool.poetry_bumpversion.file."rslv/__init__.py"]
 

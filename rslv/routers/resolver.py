@@ -31,6 +31,21 @@ def pid_format(parts, template):
         _parts[k] = v
     return string.Template(template).substitute(_parts)
 
+
+def adjust_response_status_code_for_method(request:fastapi.Request, status_code:int) -> int:
+    """Adjust the status_code value to align with request method semantics.
+    If request method is any of POST, PUT, DELETE, ensure a status code of 307 or 308 is returned.
+    """
+    if request.method in ["POST", "PUT", "DELETE"]:
+        if status_code == 302:
+            # temporary redirect
+            return 307
+        if status_code == 301:
+            # permanent redirect
+            return 308
+    return status_code
+
+
 @dataclasses.dataclass
 class CleanedIdentifierRequest:
     original: str
@@ -103,7 +118,7 @@ def handle_get_info(request: fastapi.Request, cleaned_identifier: CleanedIdentif
     if definition is not None:
         pid_parts["target"] = pid_format(pid_parts, definition.target)
         pid_parts["canonical"] = pid_format(pid_parts, definition.canonical)
-        pid_parts["status_code"] = definition.http_code
+        pid_parts["status_code"] = adjust_response_status_code_for_method(request, definition.http_code)
         pid_parts["properties"] = definition.properties
         defn = {
             "uniq": definition.uniq,
@@ -113,6 +128,7 @@ def handle_get_info(request: fastapi.Request, cleaned_identifier: CleanedIdentif
             "target": definition.target,
             "canonical": definition.canonical,
             "synonym_for": definition.synonym_for,
+            "http_code": definition.http_code
         }
         if pid_parts["prefix"] == "":
             prefixes = pid_config.list_prefixes(pid_parts["scheme"])
@@ -142,6 +158,21 @@ def handle_get_info(request: fastapi.Request, cleaned_identifier: CleanedIdentif
     summary="Retrieve information about the provided identifier.",
     response_class=rslv.routers.PrettyJSONResponse
 )
+@router.post(
+    "/.info/{identifier:path}",
+    summary="Retrieve information about the provided identifier.",
+    response_class=rslv.routers.PrettyJSONResponse
+)
+@router.put(
+    "/.info/{identifier:path}",
+    summary="Retrieve information about the provided identifier.",
+    response_class=rslv.routers.PrettyJSONResponse
+)
+@router.delete(
+    "/.info/{identifier:path}",
+    summary="Retrieve information about the provided identifier.",
+    response_class=rslv.routers.PrettyJSONResponse
+)
 def get_info(
     request: fastapi.Request,
     identifier: typing.Optional[str] = None,
@@ -156,7 +187,7 @@ def get_info(
     if not hasattr(request.app.state, "settings"):
         raise fastapi.HTTPException(status_code=500, detail="Settings are not accessible from handlers. Check server implementation.")
     if not hasattr(request.state, "dbsession"):
-        raise fastapi.HTTPException(status_code=500, detail="No dbsession available. Check server configration.")
+        raise fastapi.HTTPException(status_code=500, detail="No dbsession available. Check server configuration.")
 
     cleaned_identifier = CleanedIdentifierRequest.from_request_url(
         str(request.url),
@@ -175,6 +206,21 @@ def get_info(
 @router.get(
     "/{identifier:path}",
     summary="Redirect to the identified resource or present resolver information.",
+    response_class=rslv.routers.PrettyJSONResponse
+)
+@router.post(
+    "/{identifier:path}",
+    summary="Retrieve information about the provided identifier.",
+    response_class=rslv.routers.PrettyJSONResponse
+)
+@router.put(
+    "/{identifier:path}",
+    summary="Retrieve information about the provided identifier.",
+    response_class=rslv.routers.PrettyJSONResponse
+)
+@router.delete(
+    "/{identifier:path}",
+    summary="Retrieve information about the provided identifier.",
     response_class=rslv.routers.PrettyJSONResponse
 )
 def get_resolve(
@@ -227,6 +273,7 @@ def get_resolve(
     # We have a match from the definition catalog.
     # Redirect the response, but include our gathered info in the body
     # to assist with debugging.
+    response_status_code = adjust_response_status_code_for_method(request, definition.http_code)
     pid_parts["target"] = pid_format(pid_parts, definition.target)
     _target = pid_parts["target"]
     # If there's no value component in the PID, then return the information
@@ -241,11 +288,11 @@ def get_resolve(
         return handle_get_info(request, cleaned_identifier)
     # OK, past all the edge cases, redirect the client to the registered target.
     pid_parts["canonical"] = pid_format(pid_parts, definition.canonical)
-    pid_parts["status_code"] = definition.http_code
+    pid_parts["status_code"] = response_status_code
     headers = {"Location": _target}
     return fastapi.responses.JSONResponse(
         content=pid_parts,
         headers=headers,
-        status_code=pid_parts.get("status_code", 302),
+        status_code=response_status_code,
     )
 
