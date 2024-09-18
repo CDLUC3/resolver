@@ -210,17 +210,17 @@ def get_info(
 )
 @router.post(
     "/{identifier:path}",
-    summary="Retrieve information about the provided identifier.",
+    summary="Redirect to the identified resource or present resolver information.",
     response_class=rslv.routers.PrettyJSONResponse
 )
 @router.put(
     "/{identifier:path}",
-    summary="Retrieve information about the provided identifier.",
+    summary="Redirect to the identified resource or present resolver information.",
     response_class=rslv.routers.PrettyJSONResponse
 )
 @router.delete(
     "/{identifier:path}",
-    summary="Retrieve information about the provided identifier.",
+    summary="Redirect to the identified resource or present resolver information.",
     response_class=rslv.routers.PrettyJSONResponse
 )
 def get_resolve(
@@ -278,7 +278,7 @@ def get_resolve(
     _target = pid_parts["target"]
     # If there's no value component in the PID, then return the information
     # this service has about the identifier.
-    if pid_parts["value"] in [None, ""]:
+    if request.app.state.settings.auto_introspection and pid_parts["value"] in [None, ""]:
         return handle_get_info(request, cleaned_identifier)
     # If the PID value part matches the value part of the matched definition,
     # then return the definition information. This is sketchy behavior but included
