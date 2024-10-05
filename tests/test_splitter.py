@@ -123,6 +123,16 @@ split_tests = (
             "value": None,
         },
     ),
+    (
+        "RRID:BDSC_64349",
+        {
+            "pid": "RRID:BDSC_64349",
+            "scheme": "rrid",
+            "content": "BDSC_64349",
+            "prefix": "BDSC_64349",
+            "value": None
+        }
+    )
 )
 
 unsplit_tests = (

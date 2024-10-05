@@ -278,6 +278,8 @@ def get_resolve(
     _target = pid_parts["target"]
     # If there's no value component in the PID, then return the information
     # this service has about the identifier.
+    # TODO: Should this be checking the content portion instead of the value? That is, if the
+    # content matches the definition content, then engage auto-introspection.
     if request.app.state.settings.auto_introspection and pid_parts["value"] in [None, ""]:
         return handle_get_info(request, cleaned_identifier)
     # If the PID value part matches the value part of the matched definition,
