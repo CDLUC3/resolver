@@ -6,6 +6,8 @@ import string
 import typing
 import urllib.parse
 import fastapi
+import werkzeug.http
+import werkzeug.datastructures
 import rslv.lib_rslv.piddefine
 import rslv.config
 
@@ -140,6 +142,24 @@ def handle_get_info(request: fastapi.Request, cleaned_identifier: CleanedIdentif
             values = pid_config.list_values(pid_parts["scheme"], pid_parts["prefix"])
             defn["values"] = [v[0] for v in values]
         pid_parts["definition"] = defn
+
+        # if templates are available from the app, then
+        # Response based on client Accept
+        try:
+            templates = request.app.state.templates
+            accept = werkzeug.http.parse_accept_header(request.headers.get("Accept", "*/*"), werkzeug.datastructures.MIMEAccept)
+            if accept.accept_html or accept.accept_xhtml:
+                # Return HTML using template
+                return templates.TemplateResponse(
+                    "introspection.html",
+                    {
+                        "request": request,
+                        "identifier": cleaned_identifier.cleaned,
+                        "pid_parts": pid_parts,
+                    }
+                )
+        except KeyError:
+            pass
         return pid_parts
     pid_parts["error"] = f"No match was found for {cleaned_identifier.cleaned}"
     return fastapi.responses.JSONResponse(

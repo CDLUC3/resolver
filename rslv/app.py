@@ -15,7 +15,8 @@ import fastapi
 import fastapi.responses
 import fastapi.middleware.cors
 import fastapi.staticfiles
-import fastapi.templating
+import starlette.templating
+import jinja2
 import sqlalchemy
 import rslv
 import rslv.config
@@ -69,22 +70,6 @@ def create_app() -> fastapi.FastAPI:
 
     app.state.settings = settings
 
-    # Enables CORS for UIs on different domains
-    app.add_middleware(
-        fastapi.middleware.cors.CORSMiddleware,
-        allow_origins=[
-            "*",
-        ],
-        allow_credentials=True,
-        allow_methods=[
-            "GET",
-            "HEAD",
-        ],
-        allow_headers=[
-            "*",
-        ],
-    )
-
     app.add_middleware(
         rslv.log_middleware.LogMiddleware,
         logger=L,
@@ -97,6 +82,15 @@ def create_app() -> fastapi.FastAPI:
             response = await call_next(request)
             return response
 
+    # Enables CORS for UIs on different domains
+    app.add_middleware(
+        fastapi.middleware.cors.CORSMiddleware,
+        allow_origins= settings.cors_origins,
+        allow_credentials=True,
+        allow_methods=["*", ],
+        allow_headers=["*", ],
+    )
+
     # static files and templates
     app.mount(
         "/static",
@@ -104,9 +98,16 @@ def create_app() -> fastapi.FastAPI:
         name="static",
     )
 
-    templates = fastapi.templating.Jinja2Templates(
-        directory=settings.template_dir
+    templates = starlette.templating.Jinja2Templates(
+        directory=settings.template_dir,
+        loader=jinja2.ChoiceLoader(
+            [
+                jinja2.FileSystemLoader(settings.template_dir),
+                jinja2.PackageLoader("rslv", "templates"),
+            ]
+        )
     )
+    app.state.templates = templates
 
     @app.get("/", include_in_schema=False)
     async def redirect_docs(request:fastapi.Request):

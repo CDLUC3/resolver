@@ -1,6 +1,9 @@
 import json
+import re
 import typing
 import starlette.responses
+
+
 class PrettyJSONResponse(starlette.responses.Response):
     media_type = "application/json"
 
@@ -12,3 +15,5 @@ class PrettyJSONResponse(starlette.responses.Response):
             indent=2,
             separators=(", ", ": "),
         ).encode("utf-8")
+
+

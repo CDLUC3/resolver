@@ -177,7 +177,7 @@ resolve_cases = (
 @pytest.mark.parametrize("test,expected", resolve_cases)
 def test_resolve_schemes(test, expected):
     client = fastapi.testclient.TestClient(rslv.app.app, follow_redirects=False)
-    response = client.request(test[1], f"/{test[0]}")
+    response = client.request(test[1], f"/{test[0]}", headers={"Accept": "application/json"})
     _match = response.json()
     L.info(json.dumps(_match, indent=2))
     assert response.status_code == expected["status"]

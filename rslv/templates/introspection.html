@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0,user-scalable=0"/>
+    <title>rslv</title>
+    <link href="{{ url_for('static', path='/style.css') }}" rel="stylesheet">
+    <script>
+        function initialize() {
+            const ele = document.getElementById("origin_url");
+            ele.innerText = window.location;
+        }
+
+        function targetToIntrospection(target) {
+            return target + "?info"
+        }
+        async function getMetadata(target) {
+            try {
+                const response = await fetch(target, {
+                    method: "GET",
+                    headers: {
+                        "Accept": "application/json",
+                        "Origin": "http://localhost:8000"
+                    }
+                });
+                return await response.json();
+            } catch (error) {
+                console.error(error);
+            }
+            return null;
+        }
+
+        function getTargetFromMetadata(metadata) {
+            try {
+                return metadata.target;
+            } catch (error) {
+                console.error(error);
+            }
+            return null;
+        }
+
+        function showMetadata(target , metadata) {
+            const holder = document.getElementById("remote_metadata");
+            const ndiv = document.createElement("details");
+            let ele = document.createElement("summary");
+            ele.innerHTML = `Loaded from: <code>${target}</code>`;
+            ndiv.appendChild(ele);
+            if (metadata !== null) {
+                ele = document.createElement("pre");
+                ele.innerText = JSON.stringify(metadata, null, 2);
+            } else {
+                ele = document.createElement("iframe")
+                ele.src = target;
+                ele.width = "100%";
+                ele.height = "800px";
+            }
+            ndiv.appendChild(ele);
+            holder.appendChild(ndiv);
+        }
+
+        async function loadTargetMetadata(target) {
+            target = targetToIntrospection(target)
+            const metadata = await getMetadata(target);
+            showMetadata(target, metadata);
+            if (metadata !== null) {
+                target = getTargetFromMetadata(metadata);
+                if (target !== null) {
+                    loadTargetMetadata(target)
+                }
+            }
+        }
+    </script>
+</head>
+<body>
+<p>Information about the identifier: <code>{{ identifier }}</code></p>
+<details>
+    <summary>Loaded from: <code id="origin_url"></code></summary>
+    <pre>{{ pid_parts | tojson(indent=2) }}</pre>
+</details>
+<div id="remote_metadata">
+</div>
+<script>initialize(); loadTargetMetadata("{{pid_parts.target}}")</script>
+</body>
+</html>

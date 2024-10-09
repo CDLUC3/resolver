@@ -1,8 +1,8 @@
 ---
 comment: |
   ’’’ codebraid pandoc –katex –from markdown+tex_math_single_backslash –filter pandoc-sidenote  
-  –to html5+smart –template=$HOME/.pandoc/templates/template.html5 \
-    --css=$HOME/.pandoc/theme.css –toc –wrap=none matching.md \> matching.html ’’’
+  –to html5+smart –template=$`HOME/.pandoc/templates/template.html5 \
+    --css=`$HOME/.pandoc/theme.css –toc –wrap=none matching.md \> matching.html ’’’
 
   style and template from https://jez.io/pandoc-markdown-css-theme/
 title: Parse and Match Identifier
@@ -27,6 +27,7 @@ It does this by splitting the input identifier string into various components an
 **Figure 1.** Overview of process for handling a user supplied identifier string. The string is split into components as a `parsed_pid` instance. That instance is matched against the available definitions. A match provides a `pid_definition` instance which is used with the \`If a match is found then the response is a redirect to the registered target or the matched definition metadata.
 
 </figcaption>
+
 </figure>
 
 ## Splitting the identifier string
@@ -60,6 +61,7 @@ The provided identifier string is split into several components (Figure 2) by ap
 **Figure 2.** Components of a `parsed_pid`. After parsing, extracted components of the identifier are available for locating a matching definition and formatting the response.
 
 </figcaption>
+
 </figure>
 
 Some examples of parsed identifiers follow. `pid` is the input identifier:
@@ -94,6 +96,7 @@ Identifier definitions provide the rules for creating a target address given a s
 **Figure 3.** General process for matching a defintion given a `parsed_pid`. Match requirements are progressively relaxed until a match is found or not. Value comparison is performed by searching for the longest definition value that matches the start of the `pid_definition.value` property. Matches on `prefix` and `scheme` are performed by exact comparison.
 
 </figcaption>
+
 </figure>
 
 Examples of identifier matching to a set of definitions.

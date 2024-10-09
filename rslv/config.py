@@ -45,6 +45,8 @@ class Settings(pydantic_settings.BaseSettings):
     # Note that this should be set False on services offering one-to-one matching of
     # definitions to PIDs. For N2T and arks.org this sould be true to match legacy behavior.
     auto_introspection: bool = True
+    #cors_origins: typing.List[str] = ["http://localhost", "http://localhost:8000", ]
+    cors_origins: typing.List[str] = ["*", ]
 
 def load_settings():
     rslv_env_file = os.environ.get("RSLV_ENV_FILE", None)
