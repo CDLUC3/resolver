@@ -137,15 +137,15 @@ info_cases = (
     ("ark:99999/9", {"uniq":"ark:99999/9", "tag":9}),
 )
 
-#@pytest.mark.parametrize("test,expected", info_cases)
-#def test_info_schemes(test, expected):
-#    client = fastapi.testclient.TestClient(rslv.app.app)
-#    response = client.get(f"/.info/{test}")
-#    _match = response.json()
-#    L.info(json.dumps(_match, indent=2))
-#    assert _match.get("definition",{}).get("uniq",None) == expected["uniq"]
-#    assert _match.get("properties", {}).get("tag", None) == expected["tag"]
-#    assert response.status_code == 200
+@pytest.mark.parametrize("test,expected", info_cases)
+def test_info_schemes(test, expected):
+    client = fastapi.testclient.TestClient(rslv.app.app)
+    response = client.get(f"/.info/{test}")
+    _match = response.json()
+    L.info(json.dumps(_match, indent=2))
+    assert _match.get("definition",{}).get("uniq",None) == expected["uniq"]
+    assert _match.get("properties", {}).get("tag", None) == expected["tag"]
+    assert response.status_code == 200
 
 
 resolve_cases = (
