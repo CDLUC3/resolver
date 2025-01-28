@@ -1,6 +1,6 @@
 [project]
 name = "rslv"
-version = "0.9.2"
+version = "0.9.3"
 description = "Provides an identifier resolver service in FastAPI."
 authors = [
     {name = "datadavev",email = "605409+datadavev@users.noreply.github.com"}
@@ -27,6 +27,7 @@ optional = true
 pytest = "^8.3.4"
 requests = "^2.32.3"
 uvicorn = {extras = ["standard"], version = "^0.34.0"}
+httpx = "^0.28.1"
 
 [tool.poetry.group.cli]
 optional = true

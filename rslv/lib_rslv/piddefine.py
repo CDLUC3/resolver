@@ -292,7 +292,7 @@ class PidDefinitionCatalog:
 
         in_length_max = min(len(value), self.get_max_value_length())
         in_values = []
-        for i in range(in_length_max, 1, -1):
+        for i in range(in_length_max, 0, -1):
             in_values.append(value[:i])
         q = (
             sqlalchemy.select(PidDefinition)
