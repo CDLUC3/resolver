@@ -112,6 +112,16 @@ def setup_config():
                 properties={"tag": 8}
             ),
         )
+        do_add(
+            cfg,
+            rslv.lib_rslv.piddefine.PidDefinition(
+                scheme="ark",
+                prefix="99999",
+                value="9",
+                target="http://arks.org/ark:${suffix}",
+                properties={"tag": 9},
+            ),
+        )
         cfg.refresh_metadata()
     finally:
         session.close()
@@ -124,6 +134,7 @@ info_cases = (
     ("ark:", {"uniq":"ark:", "tag":1}),
     ("ark:99999", {"uniq":"ark:99999", "tag":2}),
     ("bark:99999", {"uniq":"bark:", "tag":6}),
+    ("ark:99999/9", {"uniq":"ark:99999/9", "tag":9}),
 )
 
 #@pytest.mark.parametrize("test,expected", info_cases)
@@ -158,11 +169,11 @@ resolve_cases = (
     (["ark:99999/fkhhdd?query=param&q2=2", "POST"], {"target": "http://fk.example.com/ark:99999/fkhhdd?query=param&q2=2", "status": 307, "tag": 4}),
     (["ark:99999/fkhhdd?query=param&q2=2", "PUT"], {"target": "http://fk.example.com/ark:99999/fkhhdd?query=param&q2=2", "status": 307, "tag": 4}),
     (["ark:99999/fkhhdd?query=param&q2=2", "DELETE"], {"target": "http://fk.example.com/ark:99999/fkhhdd?query=param&q2=2", "status": 307, "tag": 4}),
-    (["ark:99999/fk", "GET"], {"target": "http://fk.example.com/ark:99999/fk", "status": 200}),
-    (["ark:99999/fk4", "GET"], {"target": "https://fk4.example.com/", "status": 200}),
-    (["ark:99999/fk4foo", "GET"], {"target": "https://fk4.example.com/foo", "status": 302}),
-    (["purl:dc/terms/creator", "GET"], {"target": "http://purl.org/dc/terms/creator", "status": 302, "tag": 4}),
-    (["purl:dc/terms/creator?query=param&q2=2", "GET"], {"target": "http://purl.org/dc/terms/creator?query=param&q2=2", "status": 302, "tag": 4}),
+    (["ark:99999/fk", "GET"], {"target": "http://fk.example.com/ark:99999/fk", "status": 200, "tag": 4}),
+    (["ark:99999/fk4", "GET"], {"target": "https://fk4.example.com/", "status": 200, "tag": 3}),
+    (["ark:99999/fk4foo", "GET"], {"target": "https://fk4.example.com/foo", "status": 302, "tag":3}),
+    (["purl:dc/terms/creator", "GET"], {"target": "http://purl.org/dc/terms/creator", "status": 302, "tag": 8}),
+    (["purl:dc/terms/creator?query=param&q2=2", "GET"], {"target": "http://purl.org/dc/terms/creator?query=param&q2=2", "status": 302, "tag": 8}),
     (["purl:dc/terms/creator??", "GET"], {"target": "http://purl.org/dc/terms/creator", "status": 200, "tag": 8}),
     (["purl:dc/terms/creator?info", "GET"], {"target": "http://purl.org/dc/terms/creator", "status": 200, "tag": 8}),
     (["http://testserver/ark:99999/hhdd", "GET"], {"target": "https://example.99999.com/info/99999/hhdd", "status": 302}),
@@ -172,10 +183,12 @@ resolve_cases = (
     (["ark:12345/up?info", "GET"], {"target":"https://example.com/ark:12345/up", "status": 200}),
     (["ark:/12345", "GET"], {"target": "https://example.com/ark:/12345", "status": 200}),
     (["ark:12345", "GET"], {"target": "https://example.com/ark:12345", "status": 200}),
+    (["ark:99999/912345/foo", "GET"], {"target": "http://arks.org/ark:12345/foo", "status": 302, "tag":9}),
 )
 
 @pytest.mark.parametrize("test,expected", resolve_cases)
-def test_resolve_schemes(test, expected):
+def test_resolve_schemes1(test, expected):
+    L.info("test_resolve_schemes1: %s", test)
     client = fastapi.testclient.TestClient(rslv.app.app, follow_redirects=False)
     response = client.request(test[1], f"/{test[0]}")
     _match = response.json()
@@ -189,6 +202,26 @@ def test_resolve_schemes(test, expected):
         if "prefixes" in expected:
             for v in expected["prefixes"]:
                 assert v in _match["definition"]["prefixes"]
+        if "tag" in expected:
+            assert _match["properties"]["tag"] == expected["tag"]
     else:
         assert response.headers.get("location") == expected["target"]
+
+
+@pytest.mark.parametrize("test,expected", resolve_cases)
+def test_resolve_schemes2(test, expected):
+    L.info("test_resolve_schemes2: %s", test)
+    pid = test[0]
+    session = get_session()
+    try:
+        cfg = rslv.lib_rslv.piddefine.PidDefinitionCatalog(session)
+        _parts, _defn = cfg.parse(pid)
+        if _defn is not None:
+            if "tag" in expected:
+                assert expected["tag"] == _defn.properties.get("tag")
+        else:
+            # ignore the https://testserver prefixed entries, since they are invalid in this context
+            pass
+    finally:
+        session.close()
 
