@@ -1,5 +1,5 @@
-"""FastAPI router implementing identifier resolver functionality.
-"""
+"""FastAPI router implementing identifier resolver functionality."""
+
 import dataclasses
 import re
 import string
@@ -19,8 +19,7 @@ router = fastapi.APIRouter(
 
 
 def pid_format(parts, template):
-    """Given a dict of identifier parts and a template, return the filled template.
-    """
+    """Given a dict of identifier parts and a template, return the filled template."""
     # Quick hack to avoid "None" appearing in generated string.
     if template is None:
         template = "/.info/${pid}"
@@ -32,7 +31,9 @@ def pid_format(parts, template):
     return string.Template(template).substitute(_parts)
 
 
-def adjust_response_status_code_for_method(request:fastapi.Request, status_code:int) -> int:
+def adjust_response_status_code_for_method(
+    request: fastapi.Request, status_code: int
+) -> int:
     """Adjust the status_code value to align with request method semantics.
     If request method is any of POST, PUT, DELETE, ensure a status code of 307 or 308 is returned.
     """
@@ -54,7 +55,12 @@ class CleanedIdentifierRequest:
     has_service_url: bool = False
 
     @classmethod
-    def from_request_url(cls, request_url: str, app_extracted: str, service_pattern:typing.Optional[str] = None) -> 'CleanedIdentifierRequest':
+    def from_request_url(
+        cls,
+        request_url: str,
+        app_extracted: str,
+        service_pattern: typing.Optional[str] = None,
+    ) -> "CleanedIdentifierRequest":
         """Factory method creating an instance from a request URL and the APP pattern matched identifier string
 
         service_pattern is a regexp string used to match the service URL
@@ -64,40 +70,48 @@ class CleanedIdentifierRequest:
         has_service_url = False
         is_introspection = False
         if service_pattern is not None:
-            (cleaned, n_subs) = re.subn(service_pattern, "", cleaned, count=1, flags=re.IGNORECASE)
+            (cleaned, n_subs) = re.subn(
+                service_pattern, "", cleaned, count=1, flags=re.IGNORECASE
+            )
             if n_subs > 0:
                 has_service_url = True
         request_url = urllib.parse.unquote(request_url)
-        requested_identifier = request_url[request_url.find(cleaned) :]
+        requested_identifier = request_url[request_url.find(cleaned):]
         _original = requested_identifier
 
         # ARK resolvers have behavior of returning an
         # introspection ("inflection") when the URL ends with
         # "?", "??", or "?info". It is necessary to examine the raw URL
         # to determine this since it is non-standard behavior.
-        for check in ("??", "?info", "?", ):
+        for check in (
+            "??",
+            "?info",
+            "?",
+        ):
             if request_url.endswith(check):
                 if requested_identifier.endswith(check):
-                    requested_identifier = requested_identifier[:-len(check)]
+                    requested_identifier = requested_identifier[: -len(check)]
                 is_introspection = True
                 break
-        return CleanedIdentifierRequest(original=_original, cleaned=requested_identifier, is_introspection=is_introspection, has_service_url=has_service_url)
+        return CleanedIdentifierRequest(
+            original=_original,
+            cleaned=requested_identifier,
+            is_introspection=is_introspection,
+            has_service_url=has_service_url,
+        )
 
 
 @router.head(
     "/.info",
     summary="Retrieve information about the service.",
-    response_class=rslv.routers.PrettyJSONResponse
+    response_class=rslv.routers.PrettyJSONResponse,
 )
 @router.get(
     "/.info",
     summary="Retrieve information about the service.",
-    response_class=rslv.routers.PrettyJSONResponse
+    response_class=rslv.routers.PrettyJSONResponse,
 )
-def get_service_info(
-    request: fastapi.Request,
-    valid: bool = True
-):
+def get_service_info(request: fastapi.Request, valid: bool = True):
     pid_config = rslv.lib_rslv.piddefine.PidDefinitionCatalog(request.state.dbsession)
     schemes = pid_config.list_schemes(valid_targets_only=valid)
     return {
@@ -107,9 +121,13 @@ def get_service_info(
     }
 
 
-def handle_get_info(request: fastapi.Request, cleaned_identifier: CleanedIdentifierRequest):
+def handle_get_info(
+    request: fastapi.Request, cleaned_identifier: CleanedIdentifierRequest
+):
     pid_config = rslv.lib_rslv.piddefine.PidDefinitionCatalog(request.state.dbsession)
-    pid_parts, definition = pid_config.parse(cleaned_identifier.cleaned, resolve_synonym=False)
+    pid_parts, definition = pid_config.parse(
+        cleaned_identifier.cleaned, resolve_synonym=False
+    )
     # TODO: This is where a definition specific handler can be used for
     #   further processing of the PID, e.g. to remove hyphens from an ark.
     #   Basically, add a property to the definition that contains the name
@@ -118,7 +136,9 @@ def handle_get_info(request: fastapi.Request, cleaned_identifier: CleanedIdentif
     if definition is not None:
         pid_parts["target"] = pid_format(pid_parts, definition.target)
         pid_parts["canonical"] = pid_format(pid_parts, definition.canonical)
-        pid_parts["status_code"] = adjust_response_status_code_for_method(request, definition.http_code)
+        pid_parts["status_code"] = adjust_response_status_code_for_method(
+            request, definition.http_code
+        )
         pid_parts["properties"] = definition.properties
         defn = {
             "uniq": definition.uniq,
@@ -128,7 +148,7 @@ def handle_get_info(request: fastapi.Request, cleaned_identifier: CleanedIdentif
             "target": definition.target,
             "canonical": definition.canonical,
             "synonym_for": definition.synonym_for,
-            "http_code": definition.http_code
+            "http_code": definition.http_code,
         }
         if pid_parts["prefix"] == "":
             prefixes = pid_config.list_prefixes(pid_parts["scheme"])
@@ -142,36 +162,33 @@ def handle_get_info(request: fastapi.Request, cleaned_identifier: CleanedIdentif
         pid_parts["definition"] = defn
         return pid_parts
     pid_parts["error"] = f"No match was found for {cleaned_identifier.cleaned}"
-    return fastapi.responses.JSONResponse(
-        content=pid_parts,
-        status_code=404
-    )
+    return fastapi.responses.JSONResponse(content=pid_parts, status_code=404)
 
 
 @router.head(
     "/.info/{identifier:path}",
     summary="Retrieve information about the provided identifier.",
-    response_class=rslv.routers.PrettyJSONResponse
+    response_class=rslv.routers.PrettyJSONResponse,
 )
 @router.get(
     "/.info/{identifier:path}",
     summary="Retrieve information about the provided identifier.",
-    response_class=rslv.routers.PrettyJSONResponse
+    response_class=rslv.routers.PrettyJSONResponse,
 )
 @router.post(
     "/.info/{identifier:path}",
     summary="Retrieve information about the provided identifier.",
-    response_class=rslv.routers.PrettyJSONResponse
+    response_class=rslv.routers.PrettyJSONResponse,
 )
 @router.put(
     "/.info/{identifier:path}",
     summary="Retrieve information about the provided identifier.",
-    response_class=rslv.routers.PrettyJSONResponse
+    response_class=rslv.routers.PrettyJSONResponse,
 )
 @router.delete(
     "/.info/{identifier:path}",
     summary="Retrieve information about the provided identifier.",
-    response_class=rslv.routers.PrettyJSONResponse
+    response_class=rslv.routers.PrettyJSONResponse,
 )
 def get_info(
     request: fastapi.Request,
@@ -185,14 +202,18 @@ def get_info(
 
     """
     if not hasattr(request.app.state, "settings"):
-        raise fastapi.HTTPException(status_code=500, detail="Settings are not accessible from handlers. Check server implementation.")
+        raise fastapi.HTTPException(
+            status_code=500,
+            detail="Settings are not accessible from handlers. Check server implementation.",
+        )
     if not hasattr(request.state, "dbsession"):
-        raise fastapi.HTTPException(status_code=500, detail="No dbsession available. Check server configuration.")
+        raise fastapi.HTTPException(
+            status_code=500,
+            detail="No dbsession available. Check server configuration.",
+        )
 
     cleaned_identifier = CleanedIdentifierRequest.from_request_url(
-        str(request.url),
-        identifier,
-        request.app.state.settings.service_pattern
+        str(request.url), identifier, request.app.state.settings.service_pattern
     )
 
     return handle_get_info(request, cleaned_identifier)
@@ -201,33 +222,33 @@ def get_info(
 @router.head(
     "/{identifier:path}",
     summary="Redirect to the identified resource or present resolver information.",
-    response_class=rslv.routers.PrettyJSONResponse
+    response_class=rslv.routers.PrettyJSONResponse,
 )
 @router.get(
     "/{identifier:path}",
     summary="Redirect to the identified resource or present resolver information.",
-    response_class=rslv.routers.PrettyJSONResponse
+    response_class=rslv.routers.PrettyJSONResponse,
 )
 @router.post(
     "/{identifier:path}",
     summary="Redirect to the identified resource or present resolver information.",
-    response_class=rslv.routers.PrettyJSONResponse
+    response_class=rslv.routers.PrettyJSONResponse,
 )
 @router.put(
     "/{identifier:path}",
     summary="Redirect to the identified resource or present resolver information.",
-    response_class=rslv.routers.PrettyJSONResponse
+    response_class=rslv.routers.PrettyJSONResponse,
 )
 @router.delete(
     "/{identifier:path}",
     summary="Redirect to the identified resource or present resolver information.",
-    response_class=rslv.routers.PrettyJSONResponse
+    response_class=rslv.routers.PrettyJSONResponse,
 )
 def get_resolve(
     request: fastapi.Request,
     identifier: typing.Optional[str] = None,
 ):
-    '''
+    """
     Redirect to the identified resource or present identifier information.
 
     Args:
@@ -238,17 +259,20 @@ def get_resolve(
         A HTTP response that either redirects client to registered target or presents information
         about the provided identifier.
 
-    '''
+    """
     if not hasattr(request.app.state, "settings"):
-        raise fastapi.HTTPException(status_code=500, detail="Settings are not accessible from handlers. Check server implementation.")
+        raise fastapi.HTTPException(
+            status_code=500,
+            detail="Settings are not accessible from handlers. Check server implementation.",
+        )
     if not hasattr(request.state, "dbsession"):
-        raise fastapi.HTTPException(status_code=500, detail="No dbsession available. Check server configration.")
+        raise fastapi.HTTPException(
+            status_code=500, detail="No dbsession available. Check server configration."
+        )
 
     # Clean up the identifier extracted from the request URL
     cleaned_identifier = CleanedIdentifierRequest.from_request_url(
-        str(request.url),
-        identifier,
-        request.app.state.settings.service_pattern
+        str(request.url), identifier, request.app.state.settings.service_pattern
     )
 
     # If the request was for introspection (inflection) use the info handler
@@ -266,27 +290,32 @@ def get_resolve(
         # Return a 404 response and include the pid parts in the body with a
         # message indicating not found
         pid_parts["error"] = f"No match was found for {cleaned_identifier.original}"
-        return fastapi.responses.JSONResponse(
-            content=pid_parts,
-            status_code=404
-        )
+        return fastapi.responses.JSONResponse(content=pid_parts, status_code=404)
     # We have a match from the definition catalog.
     # Redirect the response, but include our gathered info in the body
     # to assist with debugging.
-    response_status_code = adjust_response_status_code_for_method(request, definition.http_code)
+    response_status_code = adjust_response_status_code_for_method(
+        request, definition.http_code
+    )
     pid_parts["target"] = pid_format(pid_parts, definition.target)
     _target = pid_parts["target"]
     # If there's no value component in the PID, then return the information
     # this service has about the identifier.
     # TODO: Should this be checking the content portion instead of the value? That is, if the
     # content matches the definition content, then engage auto-introspection.
-    if request.app.state.settings.auto_introspection and pid_parts["value"] in [None, ""]:
+    if request.app.state.settings.auto_introspection and pid_parts["value"] in [
+        None,
+        "",
+    ]:
         return handle_get_info(request, cleaned_identifier)
     # If the PID value part matches the value part of the matched definition,
     # then return the definition information. This is sketchy behavior but included
     # here because it follows the legacy N2T behavior. It can be disabled through
     # the auto_introspection configuration boolean value.
-    if request.app.state.settings.auto_introspection and pid_parts["value"] == definition.value:
+    if (
+        request.app.state.settings.auto_introspection
+        and pid_parts["value"] == definition.value
+    ):
         return handle_get_info(request, cleaned_identifier)
     # OK, past all the edge cases, redirect the client to the registered target.
     pid_parts["canonical"] = pid_format(pid_parts, definition.canonical)
@@ -297,4 +326,3 @@ def get_resolve(
         headers=headers,
         status_code=response_status_code,
     )
-

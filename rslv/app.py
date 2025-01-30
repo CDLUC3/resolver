@@ -7,6 +7,7 @@ This software implements a general purpose identifier resolver. Given an identif
 it will parse the identifier, locate a corresponding definition, and either present information
 about the identifier or redirect the user to the registered target.
 """
+
 import contextlib
 import functools
 import typing
@@ -22,9 +23,11 @@ import rslv.config
 import rslv.log_middleware
 import rslv.routers.resolver
 
+
 @functools.lru_cache(maxsize=None)
 def get_engine(dbcnstr: str) -> sqlalchemy.engine.base.Engine:
     return sqlalchemy.create_engine(dbcnstr, pool_pre_ping=True)
+
 
 @contextlib.contextmanager
 def get_dbsession(dbengine) -> typing.Iterator[sqlalchemy.orm.Session]:
@@ -37,6 +40,7 @@ def get_dbsession(dbengine) -> typing.Iterator[sqlalchemy.orm.Session]:
     finally:
         dbsession.close()
 
+
 @contextlib.asynccontextmanager
 async def dbengine_lifespan(app: fastapi):
     dbcnstr = app.state.settings.db_connection_string
@@ -44,6 +48,7 @@ async def dbengine_lifespan(app: fastapi):
     yield
     if app.state.dbengine is not None:
         app.state.dbengine.dispose()
+
 
 def create_app() -> fastapi.FastAPI:
 
@@ -104,12 +109,10 @@ def create_app() -> fastapi.FastAPI:
         name="static",
     )
 
-    templates = fastapi.templating.Jinja2Templates(
-        directory=settings.template_dir
-    )
+    templates = fastapi.templating.Jinja2Templates(directory=settings.template_dir)
 
     @app.get("/", include_in_schema=False)
-    async def redirect_docs(request:fastapi.Request):
+    async def redirect_docs(request: fastapi.Request):
         return templates.TemplateResponse("index.html", {"request": request})
 
     @app.get("/favicon.ico", include_in_schema=False)
@@ -125,13 +128,9 @@ app = create_app()
 if __name__ == "__main__":
     try:
         import uvicorn
+
         settings = rslv.config.load_settings()
-        uvicorn.run(
-            "app:app",
-            port = settings.port,
-            host = settings.host,
-            reload=True
-        )
+        uvicorn.run("app:app", port=settings.port, host=settings.host, reload=True)
     except ImportError as e:
         print("Unable to run as uvicorn is not available.")
         print(e)

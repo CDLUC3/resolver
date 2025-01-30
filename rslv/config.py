@@ -26,6 +26,7 @@ class Settings(pydantic_settings.BaseSettings):
 
     See: https://docs.pydantic.dev/latest/concepts/pydantic_settings/
     """
+
     model_config = pydantic_settings.SettingsConfigDict(
         env_prefix="rslv_", env_file=".env", env_file_encoding="utf-8"
     )
@@ -46,10 +47,9 @@ class Settings(pydantic_settings.BaseSettings):
     # definitions to PIDs. For N2T and arks.org this sould be true to match legacy behavior.
     auto_introspection: bool = True
 
+
 def load_settings():
     rslv_env_file = os.environ.get("RSLV_ENV_FILE", None)
     if rslv_env_file is not None:
         return Settings(_env_file=rslv_env_file)
     return Settings()
-
-

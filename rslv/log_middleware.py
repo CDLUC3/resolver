@@ -5,6 +5,7 @@ Borrowed various pieces from:
 - https://stackoverflow.com/questions/70891687/how-do-i-get-my-fastapi-applications-console-log-in-json-format-with-a-differen
 - https://www.sheshbabu.com/posts/fastapi-structured-json-logging/
 """
+
 import json
 import logging
 import sys
@@ -84,6 +85,7 @@ class LogMiddleware(starlette.middleware.base.BaseHTTPMiddleware):
             self.write_log_data, request, response
         )
         return response
+
 
 def get_logger(name, level=logging.INFO, log_filename=None, log_stderr=True):
     formatter = JsonFormatter("%(asctime)s")

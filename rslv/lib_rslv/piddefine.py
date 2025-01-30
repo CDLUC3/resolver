@@ -74,9 +74,7 @@ class PidDefinition(Base):
     # (media-type, profile, etc) by making this a dict and matching request
     # properties with the key, e.g. target = {"*":{"target":PATTERN, "http_code": 302}, ...}
     target: sqlorm.Mapped[str] = sqlorm.mapped_column(
-        default=None,
-        doc="Pattern for target string generation.",
-        nullable=True
+        default=None, doc="Pattern for target string generation.", nullable=True
     )
     http_code: sqlorm.Mapped[int] = sqlorm.mapped_column(
         default=302, doc="HTTP status code for response."
@@ -101,7 +99,7 @@ class PidDefinition(Base):
     @sqlalchemy.orm.validates("scheme")
     def validate_scheme(self, key, scheme):
         scheme = scheme.strip(":/ ")
-        #if "/" in scheme:
+        # if "/" in scheme:
         #    raise ValueError("'/' is not allowed in scheme.")
         if ":" in scheme:
             raise ValueError("':' is not allowed in scheme.")
@@ -221,7 +219,7 @@ class PidDefinitionCatalog:
         return {
             "description": meta.description,
             "created": meta.created.replace(tzinfo=datetime.timezone.utc),
-            "updated": m_updated
+            "updated": m_updated,
         }
 
     def get_max_value_length(self) -> int:
@@ -381,10 +379,12 @@ class PidDefinitionCatalog:
 
     def update(self, entry: PidDefinition) -> int:
         existing_entry = self.get_by_uniq(entry.uniq)
-        existing_revision =existing_entry.properties.get("revision", 0)
+        existing_revision = existing_entry.properties.get("revision", 0)
         new_revision = entry.properties.get("revision", 0)
         if new_revision < existing_revision:
-            raise ValueError(f"Attempting to update a newer revision. Existing={existing_revision}, new={new_revision}")
+            raise ValueError(
+                f"Attempting to update a newer revision. Existing={existing_revision}, new={new_revision}"
+            )
         if existing_entry is None:
             raise ValueError(f"No existing record for: {entry.uniq}")
         n_changes = existing_entry.update(entry)
@@ -399,7 +399,7 @@ class PidDefinitionCatalog:
         }
         try:
             res["uniq"] = self.add(entry)
-        except sqlalchemy.exc.IntegrityError as e:
+        except sqlalchemy.exc.IntegrityError:
             self._session.rollback()
             entry.uniq = calculate_definition_uniq(
                 entry.scheme, entry.prefix, entry.value
@@ -408,24 +408,29 @@ class PidDefinitionCatalog:
             res["n_changes"] = self.update(entry)
         return res
 
-    def parse(self, pid_str: str, resolve_synonym:bool=True) -> typing.Tuple[dict, typing.Optional[PidDefinition]]:
+    def parse(
+        self, pid_str: str, resolve_synonym: bool = True
+    ) -> typing.Tuple[dict, typing.Optional[PidDefinition]]:
         parts = rslv.lib_rslv.split_identifier_string(pid_str)
         parts["suffix"] = ""
         pid_definition = self.get(
-            scheme=parts["scheme"], prefix=parts["prefix"], value=parts["value"], resolve_synonym=resolve_synonym
+            scheme=parts["scheme"],
+            prefix=parts["prefix"],
+            value=parts["value"],
+            resolve_synonym=resolve_synonym,
         )
         if pid_definition is None:
             return parts, None
         if pid_definition.splitter is not None:
             # TODO: implement additional split
             pass
-        was_synonym = False
-        if parts['scheme'] != pid_definition.scheme:
-            was_synonym = True
+        # was_synonym = False
+        if parts["scheme"] != pid_definition.scheme:
+            # was_synonym = True
             parts["scheme"] = pid_definition.scheme
         if pid_definition.prefix is not None:
-            if parts['prefix'] != pid_definition.prefix:
-                was_synonym = True
+            if parts["prefix"] != pid_definition.prefix:
+                # was_synonym = True
                 parts["prefix"] = pid_definition.prefix
 
         # Compute the suffix
@@ -445,13 +450,19 @@ class PidDefinitionCatalog:
             parts["suffix"] = rslv.lib_rslv.remove_hyphens(parts["suffix"])
         return parts, pid_definition
 
-    def list_schemes(self, valid_targets_only:bool=False):
+    def list_schemes(self, valid_targets_only: bool = False):
         q = sqlalchemy.select(PidDefinition.scheme).distinct(PidDefinition.scheme)
         if valid_targets_only:
             q = q.filter(
                 sqlalchemy.or_(
-                    PidDefinition.properties[("target","DEFAULT",)] != 'null',
-                    PidDefinition.synonym_for != None
+                    PidDefinition.properties[
+                        (
+                            "target",
+                            "DEFAULT",
+                        )
+                    ]
+                    != "null",
+                    PidDefinition.synonym_for != None,  # noqa: E711
                 )
             )
         result = self._session.execute(q)
@@ -463,7 +474,7 @@ class PidDefinitionCatalog:
             .distinct()
             .where(
                 sqlalchemy.and_(
-                    PidDefinition.scheme == scheme, PidDefinition.prefix != ""
+                    PidDefinition.scheme == scheme, PidDefinition.prefix != ""  # noqa: E711
                 )
             )
         )
@@ -475,8 +486,7 @@ class PidDefinitionCatalog:
             sqlalchemy.select(PidDefinition.value)
             # don't include field name in distinct
             # https://stackoverflow.com/questions/17223174/returning-distinct-rows-in-sqlalchemy-with-sqlite
-            .distinct()
-            .where(
+            .distinct().where(
                 sqlalchemy.and_(
                     PidDefinition.scheme == scheme,
                     PidDefinition.prefix == prefix,
@@ -491,6 +501,7 @@ class PidDefinitionCatalog:
 def get_session(engine):
     return sqlalchemy.orm.sessionmaker(bind=engine)()
 
+
 @contextlib.contextmanager
 def get_catalog(engine):
     session = get_session(engine)
@@ -498,6 +509,7 @@ def get_catalog(engine):
         yield PidDefinitionCatalog(session)
     finally:
         session.close()
+
 
 def create_database(engine, description: str):
     """

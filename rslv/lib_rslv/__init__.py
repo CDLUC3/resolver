@@ -7,7 +7,7 @@ import urllib.parse
 # regexp for matching a general identifier pattern of scheme:content
 RE_IDENTIFIER = re.compile(
     r"\b(?P<PID>(?P<scheme>[A-Za-z0-9/;.\-]+):/?(?P<content>\S+))\b",
-    re.IGNORECASE | re.MULTILINE
+    re.IGNORECASE | re.MULTILINE,
 )
 
 
@@ -35,7 +35,7 @@ def split_identifier_string(pid_str: str) -> typing.Dict[str, typing.Any]:
         "prefix": None,
         "value": None,
     }
-    _parts = pid_str.split(":",1)
+    _parts = pid_str.split(":", 1)
     parsed["scheme"] = _parts[0].strip().lower()
     try:
         parsed["content"] = _parts[1].lstrip(" /:")
@@ -52,7 +52,7 @@ def split_identifier_string(pid_str: str) -> typing.Dict[str, typing.Any]:
     return parsed
 
 
-def unsplit_identifier_string(template_str:str, pid_parts:dict) -> str:
+def unsplit_identifier_string(template_str: str, pid_parts: dict) -> str:
     """Unsplit a dict of identifier components.
 
     template_str is a python fstring compatible string that will be filled with
@@ -72,12 +72,13 @@ def identifiers_in_text(text: str) -> typing.Generator[dict, None, int]:
     for match in RE_IDENTIFIER.finditer(text):
         pid = {
             "pid": match.group("PID"),
-            "scheme": match.group('scheme'),
-            "content": match.group('content'),
+            "scheme": match.group("scheme"),
+            "content": match.group("content"),
         }
         count += 1
         yield pid
     return count
+
 
 def remove_hyphens(text: typing.Optional[str]) -> typing.Optional[str]:
     # removes hyphens, but not from query part...
@@ -86,8 +87,7 @@ def remove_hyphens(text: typing.Optional[str]) -> typing.Optional[str]:
     ab = text.split("?", 1)
     a = ab[0].replace("-", "")
     # while here, clean up mutiple sequential slashes
-    a = re.sub('/+','/', a)
+    a = re.sub("/+", "/", a)
     if len(ab) < 2:
         return a
     return f"{a}?{ab[1]}"
-

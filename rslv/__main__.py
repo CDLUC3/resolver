@@ -1,6 +1,7 @@
 """
 Script for basic management of the pid configuration sqlite instance.
 """
+
 import json
 import logging
 import logging.config
@@ -61,7 +62,6 @@ def main(ctx, verbosity):
     verbosity = verbosity.upper()
     logging_config["loggers"][""]["level"] = verbosity
     logging.config.dictConfig(logging_config)
-    L = get_logger()
     settings = rslv.config.load_settings()
     ctx.ensure_object(dict)
     ctx.obj["engine"] = sqlalchemy.create_engine(
@@ -84,8 +84,7 @@ def initialize_configuration(ctx, description):
 @main.command("schemes")
 @click.pass_context
 def list_schemes(ctx):
-    """List the schemes registered in the database.
-    """
+    """List the schemes registered in the database."""
     session = rslv.lib_rslv.piddefine.get_session(ctx.obj["engine"])
     try:
         definitions = rslv.lib_rslv.piddefine.PidDefinitionCatalog(session)
@@ -100,8 +99,7 @@ def list_schemes(ctx):
 @click.pass_context
 @click.argument("scheme")
 def list_prefixes(ctx, scheme):
-    """List the prefixes for the specified scheme.
-    """
+    """List the prefixes for the specified scheme."""
     session = rslv.lib_rslv.piddefine.get_session(ctx.obj["engine"])
     try:
         definitions = rslv.lib_rslv.piddefine.PidDefinitionCatalog(session)
@@ -117,8 +115,7 @@ def list_prefixes(ctx, scheme):
 @click.argument("scheme")
 @click.argument("prefix")
 def list_value(ctx, scheme, prefix):
-    """List the values of the specified scheme, prefix combination.
-    """
+    """List the values of the specified scheme, prefix combination."""
     session = rslv.lib_rslv.piddefine.get_session(ctx.obj["engine"])
     try:
         definitions = rslv.lib_rslv.piddefine.PidDefinitionCatalog(session)
@@ -138,7 +135,12 @@ def list_value(ctx, scheme, prefix):
     "-t", "--target", help="Pattern for creation of target values", default="{pid}"
 )
 @click.option(
-    "-r","--redirect",help="HTTP redirect status code", default=302, show_default=True, type=int
+    "-r",
+    "--redirect",
+    help="HTTP redirect status code",
+    default=302,
+    show_default=True,
+    type=int,
 )
 @click.option(
     "-c",
