@@ -1,6 +1,6 @@
 [project]
 name = "rslv"
-version = "0.9.3"
+version = "0.9.4"
 description = "Provides an identifier resolver service in FastAPI."
 authors = [
     {name = "datadavev",email = "605409+datadavev@users.noreply.github.com"}
