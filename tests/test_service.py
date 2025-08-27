@@ -236,3 +236,12 @@ def test_resolve_schemes2(test, expected):
     finally:
         session.close()
 
+
+@pytest.mark.parametrize("test,expected", resolve_cases)
+def test_resolve_schemes_no_redirect(test, expected):
+    L.info("test_resolve_schemes1: %s", test)
+    client = fastapi.testclient.TestClient(rslv.app.app, follow_redirects=False)
+    response = client.request(test[1], f"/{test[0]}", headers={"x-no-redirect":"1"})
+    _match = response.json()
+    L.info(json.dumps(_match, indent=2))
+    assert response.status_code == 200

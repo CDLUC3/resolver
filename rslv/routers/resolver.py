@@ -321,6 +321,10 @@ def get_resolve(
     pid_parts["canonical"] = pid_format(pid_parts, definition.canonical)
     pid_parts["status_code"] = response_status_code
     headers = {"Location": _target}
+    # Check if request includes no redirect header and
+    # override the redirect if so.
+    if request.app.state.settings.request_no_redirect in request.headers:
+        response_status_code = 200
     return fastapi.responses.JSONResponse(
         content=pid_parts,
         headers=headers,
