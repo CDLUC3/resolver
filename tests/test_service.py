@@ -122,6 +122,16 @@ def setup_config():
                 properties={"tag": 9},
             ),
         )
+        do_add(
+            cfg,
+            rslv.lib_rslv.piddefine.PidDefinition(
+                scheme="ark",
+                prefix="99999",
+                value="nostrip",
+                target="http://example.org/ark${suffix}",
+                properties={"tag": 10, "strip_hyphens": False},
+            ),
+        )
         cfg.refresh_metadata()
     finally:
         session.close()
@@ -184,6 +194,7 @@ resolve_cases = (
     (["ark:/12345", "GET"], {"target": "https://example.com/ark:/12345", "status": 200}),
     (["ark:12345", "GET"], {"target": "https://example.com/ark:12345", "status": 200}),
     (["ark:99999/912345/foo", "GET"], {"target": "http://arks.org/ark:12345/foo", "status": 302, "tag":9}),
+    (["ark:99999/nostrip/foo-bar", "GET"], {"target": "http://example.org/ark/foo-bar", "status": 302, "tag":10}),
 )
 
 @pytest.mark.parametrize("test,expected", resolve_cases)
