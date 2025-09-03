@@ -22,7 +22,7 @@ It does this by splitting the input identifier string into various components an
 
 <figcaption>
 
-**Figure 1.** Overview of process for handling a user supplied identifier string. The string is split into components as a `parsed_pid` instance. That instance is matched against the available definitions. A match provides a `pid_definition` instance which is used with the `If a match is found then the response is a redirect to the registered target or the matched definition metadata. 
+**Figure 1.** Overview of process for handling a user supplied identifier string. The string is split into components as a `parsed_pid` instance. That instance is matched against the available definitions. A match provides a `pid_definition` instance which is used with the `If a match is found then the response is a redirect to the registered target or the matched definition metadata.
 
 </figcaption>
 
@@ -38,7 +38,7 @@ The provided identifier string is split into several components (Figure 2) by ap
 3. Left trim whitespace or any instances of the characters `:`, `/` from the second portion. This portion is the `content`.
 4. Split `content` at the first occurrence of the forward slash character ("/").
 5. The first portion is the `prefix`
-6. Left trim whitespace pr any instance of the characters `:`, `/` from the second portion. This portion is the `value`. 
+6. Left trim whitespace pr any instance of the characters `:`, `/` from the second portion. This portion is the `value`.
 
 <figure>
 
@@ -50,7 +50,7 @@ identifier = ark:12345/some_value/with?extra=foo
               |    |             |
            scheme  |           value
                  prefix
-       
+
 scheme = "ark"
 content = "12345/some_value/with?extra=foo"
 prefix = "12345"
@@ -59,7 +59,7 @@ value = "some_value/with?extra=foo"
 
 <figcaption>
 
-**Figure 2.** Components of a `parsed_pid`. After parsing, extracted components of the identifier are available for locating a matching definition and formatting the response. 
+**Figure 2.** Components of a `parsed_pid`. After parsing, extracted components of the identifier are available for locating a matching definition and formatting the response.
 
 </figcaption>
 </figure>
@@ -105,7 +105,7 @@ examples = [
   "ark:99999/foozle",
   "ark:example/foozle",
   "ark:99999/fk4qwerty",
-  "ark:99999/fkqwerty",  
+  "ark:99999/fkqwerty",
 ]
 doc_parts.defn_match_table(pids=examples)
 ```

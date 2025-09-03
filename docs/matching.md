@@ -1,6 +1,6 @@
 ---
 comment: |
-  ’’’ codebraid pandoc –katex –from markdown+tex_math_single_backslash –filter pandoc-sidenote  
+  ’’’ codebraid pandoc –katex –from markdown+tex_math_single_backslash –filter pandoc-sidenote
   –to html5+smart –template=$HOME/.pandoc/templates/template.html5 \
     --css=$HOME/.pandoc/theme.css –toc –wrap=none matching.md \> matching.html ’’’
 
@@ -49,7 +49,7 @@ The provided identifier string is split into several components (Figure 2) by ap
                   |    |             |
                scheme  |           value
                      prefix
-           
+
     scheme = "ark"
     content = "12345/some_value/with?extra=foo"
     prefix = "12345"

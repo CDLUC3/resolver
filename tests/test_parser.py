@@ -74,7 +74,7 @@ def setup_config():
         do_add(
             cfg,
             rslv.lib_rslv.piddefine.PidDefinition(
-                scheme="ark", prefix="12345", value="nostrip", 
+                scheme="ark", prefix="12345", value="nostrip",
                 properties={"name": "Frank", "strip_hyphens":False}
             ),
         )
@@ -97,7 +97,7 @@ parse_cases = (
         "bark:99999/fk44wlr;jglerig",
         {"scheme": "ark", "prefix": "99999", "value": "fk4"},
     ),
-    (   
+    (
         "ark:12345/nostrip-test",
         {"scheme": "ark", "prefix": "12345", "value": "nostrip", "suffix":"-test"},
     )

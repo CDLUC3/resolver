@@ -4,7 +4,7 @@ title: "`rslv` Generic Resolver Service"
 
 `rslv` implements a resolver service. That is, given an identifier string, the service returns information about the identifier or redirects to the known location of the identified resource.
 
-`rslv` is written in Python and requires python version 3.9 or later. `rslv` may be run as a command line application or more typically, as a web service. 
+`rslv` is written in Python and requires python version 3.9 or later. `rslv` may be run as a command line application or more typically, as a web service.
 
 ## Installation
 
@@ -36,7 +36,7 @@ For development purposes, `rslv` may be run from the command line to provide a t
 python rslv/app.py
 ```
 
-A production deployment should use an ASGI server such as [Uvicorn](https://www.uvicorn.org/) or [Nginx Unit](https://unit.nginx.org/). Uivcorn will generally be deployed behind another web server such as Apache or Nginx whereas `Unit` may be deployed as the web server. 
+A production deployment should use an ASGI server such as [Uvicorn](https://www.uvicorn.org/) or [Nginx Unit](https://unit.nginx.org/). Uivcorn will generally be deployed behind another web server such as Apache or Nginx whereas `Unit` may be deployed as the web server.
 
 
 
@@ -45,4 +45,4 @@ Alternatively, `rslv` may be deployed to a cloud provider such as `Vercel`
 
 
 
-## 
+##

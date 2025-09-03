@@ -122,7 +122,7 @@ def get_service_info(request: fastapi.Request, valid: bool = True):
 
 
 def handle_get_info(
-    request: fastapi.Request, 
+    request: fastapi.Request,
     cleaned_identifier: CleanedIdentifierRequest,
     pid_config,
     pid_parts: dict,
@@ -226,10 +226,10 @@ def get_info(
     )
 
     return handle_get_info(
-        request, 
-        cleaned_identifier, 
-        pid_config, 
-        pid_parts, 
+        request,
+        cleaned_identifier,
+        pid_config,
+        pid_parts,
         definition
     )
 
@@ -300,7 +300,7 @@ def get_resolve(
     # If the request was for introspection (inflection) use the info handler
     if cleaned_identifier.is_introspection:
         return handle_get_info(
-            request, 
+            request,
             cleaned_identifier,
             pid_config,
             pid_parts,
@@ -329,7 +329,7 @@ def get_resolve(
         "",
     ]:
         return handle_get_info(
-            request, 
+            request,
             cleaned_identifier,
             pid_config,
             pid_parts,
@@ -344,7 +344,7 @@ def get_resolve(
         and pid_parts["value"] == definition.value
     ):
         return handle_get_info(
-            request, 
+            request,
             cleaned_identifier,
             pid_config,
             pid_parts,

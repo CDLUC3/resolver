@@ -7,7 +7,7 @@ title: Configuring rslv
 ## Service Setup
 
 - `config.py` options
-- `logging.conf` 
+- `logging.conf`
 
 ## Resolver Configuration
 
@@ -55,5 +55,3 @@ scheme:prefix/value
 Target Template
 
 The target is specified in the definition as a template with placeholders that are filled by components of the parsed identifier.
-
-

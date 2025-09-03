@@ -39,14 +39,14 @@ def split_identifier_string(pid_str: str) -> typing.Dict[str, typing.Any]:
     parsed["scheme"] = _parts[0].strip().lower()
     try:
         parsed["content"] = _parts[1].lstrip(" /:")
-        parsed["content"] = parsed["content"].strip()  # type: ignore 
+        parsed["content"] = parsed["content"].strip()  # type: ignore
     except IndexError:
         return parsed
-    _parts = parsed["content"].split("/", 1)  # type: ignore 
+    _parts = parsed["content"].split("/", 1)  # type: ignore
     parsed["prefix"] = _parts[0].strip()
     try:
         parsed["value"] = _parts[1].lstrip(" /")
-        parsed["value"] = parsed["value"].strip() # type: ignore 
+        parsed["value"] = parsed["value"].strip() # type: ignore
     except IndexError:
         pass
     return parsed
