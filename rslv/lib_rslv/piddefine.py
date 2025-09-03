@@ -442,12 +442,18 @@ class PidDefinitionCatalog:
             )
             parts["suffix"] = pid_str[suffix_pos:]
 
-        # Hack alert - need to deal with the oddness of ARK identifiers ignoring hyphens.
+        # Hack alert - Optionally need to deal with the oddness of ARK identifiers ignoring hyphens.
         if parts["scheme"] == "ark":
-            # remove hyphens from the content and value portions, but not from the query portion, if present...
-            parts["content"] = rslv.lib_rslv.remove_hyphens(parts["content"])
-            parts["value"] = rslv.lib_rslv.remove_hyphens(parts["value"])
-            parts["suffix"] = rslv.lib_rslv.remove_hyphens(parts["suffix"])
+            # Hyphen stripping for ARKs is optionally set at the definition level
+            # and defaults to True to match the legacy resolver behavior
+            strip_ark_hyphens = True
+            if pid_definition.properties is not None:
+                strip_ark_hyphens = pid_definition.properties.get("strip_hyphens", True)
+            if strip_ark_hyphens:
+                # remove hyphens from the content and value portions, but not from the query portion, if present...
+                parts["content"] = rslv.lib_rslv.remove_hyphens(parts["content"])
+                parts["value"] = rslv.lib_rslv.remove_hyphens(parts["value"])
+                parts["suffix"] = rslv.lib_rslv.remove_hyphens(parts["suffix"])
         return parts, pid_definition
 
     def list_schemes(self, valid_targets_only: bool = False):

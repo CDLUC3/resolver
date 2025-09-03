@@ -122,12 +122,16 @@ def get_service_info(request: fastapi.Request, valid: bool = True):
 
 
 def handle_get_info(
-    request: fastapi.Request, cleaned_identifier: CleanedIdentifierRequest
+    request: fastapi.Request,
+    cleaned_identifier: CleanedIdentifierRequest,
+    pid_config,
+    pid_parts: dict,
+    definition: typing.Optional[rslv.lib_rslv.piddefine.PidDefinition]
 ):
-    pid_config = rslv.lib_rslv.piddefine.PidDefinitionCatalog(request.state.dbsession)
-    pid_parts, definition = pid_config.parse(
-        cleaned_identifier.cleaned, resolve_synonym=False
-    )
+    #pid_config = rslv.lib_rslv.piddefine.PidDefinitionCatalog(request.state.dbsession)
+    #pid_parts, definition = pid_config.parse(
+    #    cleaned_identifier.cleaned, resolve_synonym=False
+    #)
     # TODO: This is where a definition specific handler can be used for
     #   further processing of the PID, e.g. to remove hyphens from an ark.
     #   Basically, add a property to the definition that contains the name
@@ -216,7 +220,18 @@ def get_info(
         str(request.url), identifier, request.app.state.settings.service_pattern
     )
 
-    return handle_get_info(request, cleaned_identifier)
+    pid_config = rslv.lib_rslv.piddefine.PidDefinitionCatalog(request.state.dbsession)
+    pid_parts, definition = pid_config.parse(
+        cleaned_identifier.cleaned, resolve_synonym=False
+    )
+
+    return handle_get_info(
+        request,
+        cleaned_identifier,
+        pid_config,
+        pid_parts,
+        definition
+    )
 
 
 @router.head(
@@ -275,16 +290,22 @@ def get_resolve(
         str(request.url), identifier, request.app.state.settings.service_pattern
     )
 
-    # If the request was for introspection (inflection) use the info handler
-    if cleaned_identifier.is_introspection:
-        return handle_get_info(request, cleaned_identifier)
 
     # Get the identifier configuration catalog
     pid_config = rslv.lib_rslv.piddefine.PidDefinitionCatalog(request.state.dbsession)
 
     # Split the identifier string into components and find the best match from the catalog
     pid_parts, definition = pid_config.parse(cleaned_identifier.cleaned)
-    # TODO: see above in get_info for PID handling with specific schemes.
+
+    # If the request was for introspection (inflection) use the info handler
+    if cleaned_identifier.is_introspection:
+        return handle_get_info(
+            request,
+            cleaned_identifier,
+            pid_config,
+            pid_parts,
+            definition
+        )
 
     if definition is None:
         # Return a 404 response and include the pid parts in the body with a
@@ -307,7 +328,13 @@ def get_resolve(
         None,
         "",
     ]:
-        return handle_get_info(request, cleaned_identifier)
+        return handle_get_info(
+            request,
+            cleaned_identifier,
+            pid_config,
+            pid_parts,
+            definition
+        )
     # If the PID value part matches the value part of the matched definition,
     # then return the definition information. This is sketchy behavior but included
     # here because it follows the legacy N2T behavior. It can be disabled through
@@ -316,11 +343,21 @@ def get_resolve(
         request.app.state.settings.auto_introspection
         and pid_parts["value"] == definition.value
     ):
-        return handle_get_info(request, cleaned_identifier)
+        return handle_get_info(
+            request,
+            cleaned_identifier,
+            pid_config,
+            pid_parts,
+            definition
+        )
     # OK, past all the edge cases, redirect the client to the registered target.
     pid_parts["canonical"] = pid_format(pid_parts, definition.canonical)
     pid_parts["status_code"] = response_status_code
     headers = {"Location": _target}
+    # Check if request includes no redirect header and
+    # override the redirect if so.
+    if request.app.state.settings.request_no_redirect in request.headers:
+        response_status_code = 200
     return fastapi.responses.JSONResponse(
         content=pid_parts,
         headers=headers,

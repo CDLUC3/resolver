@@ -108,4 +108,3 @@ def defn_match_table(pids=EXAMPLE_PIDS):
             }
             results.append(result)
         print(markdown_table(results).set_params(row_sep='markdown', quote=False).get_markdown())
-

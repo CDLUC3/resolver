@@ -46,6 +46,8 @@ class Settings(pydantic_settings.BaseSettings):
     # Note that this should be set False on services offering one-to-one matching of
     # definitions to PIDs. For N2T and arks.org this sould be true to match legacy behavior.
     auto_introspection: bool = True
+    # Optional header that if set, service returns a 200 code instead of redirect.
+    request_no_redirect: str = "x-no-redirect"
 
 
 def load_settings():
