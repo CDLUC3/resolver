@@ -12,6 +12,7 @@ rslv/data
 *.so
 
 # Distribution / packaging
+dist/
 .Python
 build/
 develop-eggs/
