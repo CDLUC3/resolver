@@ -31,6 +31,30 @@ test_cases = (
     ),
     (
         {
+            "url": "http://example.com/ark%3A/12345/foo",
+            "identifier": "ark%3A/12345/foo"
+        },
+        {
+            "original": "ark:/12345/foo",
+            "cleaned": "ark:/12345/foo",
+            "is_introspection": False,
+            "has_service_url": False,
+        }
+    ),
+    (
+        {
+            "url": "http://example.com/ark%3A/22345/foo?info",
+            "identifier": "ark:/22345/foo?info"
+        },
+        {
+            "original": "ark:/22345/foo?info",
+            "cleaned": "ark:/22345/foo",
+            "is_introspection": True,
+            "has_service_url": False,
+        }
+    ),
+    (
+        {
             "url": "http://example.com/http://example.com/ark:/32345/foo",
             "identifier": "http://example.com/ark:/32345/foo"
         },

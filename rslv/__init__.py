@@ -1,2 +1,3 @@
-# Set using poetry-bumpversion
-__version__ = "0.9.6"
+from importlib.metadata import version
+
+__version__ = version("rslv")
