@@ -29,6 +29,7 @@ It does this by splitting the input identifier string into various components an
 </figure>
 
 
+
 ## Splitting the identifier string
 
 The provided identifier string is split into several components (Figure 2) by applying the following rules:
