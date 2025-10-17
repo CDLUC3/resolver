@@ -1,6 +1,6 @@
 [project]
 name = "rslv"
-version = "0.10.1"
+version = "0.11.0"
 description = "Provides an identifier resolver service in FastAPI."
 authors = [{ name = "datadavev", email = "605409+datadavev@users.noreply.github.com" }]
 requires-python = ">=3.9,<3.13"
