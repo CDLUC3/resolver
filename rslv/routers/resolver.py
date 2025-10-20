@@ -53,6 +53,7 @@ class CleanedIdentifierRequest:
     cleaned: typing.Optional[str] = None
     is_introspection: bool = False
     has_service_url: bool = False
+    introspection_part: typing.Optional[str] = None
 
     @classmethod
     def from_request_url(
@@ -69,6 +70,7 @@ class CleanedIdentifierRequest:
         cleaned = cleaned.lstrip(" /:.;,")
         has_service_url = False
         is_introspection = False
+        introspection_part = None
         if service_pattern is not None:
             (cleaned, n_subs) = re.subn(
                 service_pattern, "", cleaned, count=1, flags=re.IGNORECASE
@@ -92,12 +94,14 @@ class CleanedIdentifierRequest:
                 if requested_identifier.endswith(check):
                     requested_identifier = requested_identifier[: -len(check)]
                 is_introspection = True
+                introspection_part = check
                 break
         return CleanedIdentifierRequest(
             original=_original,
             cleaned=requested_identifier,
             is_introspection=is_introspection,
             has_service_url=has_service_url,
+            introspection_part=introspection_part,
         )
 
 
@@ -298,7 +302,13 @@ def get_resolve(
     pid_parts, definition = pid_config.parse(cleaned_identifier.cleaned)
 
     # If the request was for introspection (inflection) use the info handler
-    if cleaned_identifier.is_introspection:
+    # Note: introspection handler should only be called if there is an exact
+    # match of the incoming identifier with the configured entry. Otherwise, the
+    # request should be forwarded as a normal resolve redirect for the
+    # downstream service to handle the request.
+    # If there's no suffix then it's an exact match to the definition
+    if pid_parts["suffix"] == "" and cleaned_identifier.is_introspection:
+    #if cleaned_identifier.is_introspection:
         return handle_get_info(
             request,
             cleaned_identifier,
@@ -320,6 +330,7 @@ def get_resolve(
     )
     pid_parts["target"] = pid_format(pid_parts, definition.target)
     _target = pid_parts["target"]
+
     # If there's no value component in the PID, then return the information
     # this service has about the identifier.
     # TODO: Should this be checking the content portion instead of the value? That is, if the
@@ -350,6 +361,13 @@ def get_resolve(
             pid_parts,
             definition
         )
+    # If this was an inflection request and we reached here, then pass the inflection
+    # request on to the target by appending the original inflection parameter to the
+    # generated target URL.
+    if cleaned_identifier.is_introspection:
+        _target = f"{_target}{cleaned_identifier.introspection_part}"
+        pid_parts["target"]  = _target
+
     # OK, past all the edge cases, redirect the client to the registered target.
     pid_parts["canonical"] = pid_format(pid_parts, definition.canonical)
     pid_parts["status_code"] = response_status_code

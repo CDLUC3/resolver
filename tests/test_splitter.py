@@ -132,6 +132,16 @@ split_tests = (
             "prefix": "BDSC_64349",
             "value": None
         }
+    ),
+    (
+        "urn:nbn:nl:ui:12-85062",
+        {
+            "pid": "urn:nbn:nl:ui:12-85062",
+            "scheme": "urn:nbn",
+            "content": "nl:ui:12-85062",
+            "prefix": "nl:ui:12-85062",
+            "value": None
+        }
     )
 )
 
