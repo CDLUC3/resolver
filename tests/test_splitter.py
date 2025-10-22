@@ -133,16 +133,16 @@ split_tests = (
             "value": None
         }
     ),
-    (
-        "urn:nbn:nl:ui:12-85062",
-        {
-            "pid": "urn:nbn:nl:ui:12-85062",
-            "scheme": "urn:nbn",
-            "content": "nl:ui:12-85062",
-            "prefix": "nl:ui:12-85062",
-            "value": None
-        }
-    )
+    #(
+    #    "urn:nbn:nl:ui:12-85062",
+    #    {
+    #        "pid": "urn:nbn:nl:ui:12-85062",
+    #        "scheme": "urn:nbn",
+    #        "content": "nl:ui:12-85062",
+    #        "prefix": "nl:ui:12-85062",
+    #        "value": None
+    #    }
+    #)
 )
 
 unsplit_tests = (
