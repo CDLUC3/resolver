@@ -38,14 +38,16 @@ def split_identifier_string(pid_str: str) -> typing.Dict[str, typing.Any]:
     _parts = pid_str.split(":", 1)
     parsed["scheme"] = _parts[0].strip().lower()
     # Special case for URNs
-    if parsed["scheme"] == "urn":
-        _uparts = pid_str.split(":",2)
-        _parts = [":".join(_uparts[:2]),]
-        try:
-            _parts.append(_uparts[2])
-        except IndexError:
-            pass
-        parsed["scheme"] = _parts[0].strip().lower()
+    #TODO: This change has unintended impacts on N2T behavior with urn tests
+    #      Rolling back the change for later consideration.
+    #if parsed["scheme"] == "urn":
+    #    _uparts = pid_str.split(":",2)
+    #    _parts = [":".join(_uparts[:2]),]
+    #    try:
+    #        _parts.append(_uparts[2])
+    #    except IndexError:
+    #        pass
+    #    parsed["scheme"] = _parts[0].strip().lower()
     try:
         parsed["content"] = _parts[1].lstrip(" /:")
         parsed["content"] = parsed["content"].strip()  # type: ignore
