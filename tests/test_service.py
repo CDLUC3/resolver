@@ -245,3 +245,9 @@ def test_resolve_schemes_no_redirect(test, expected):
     _match = response.json()
     L.info(json.dumps(_match, indent=2))
     assert response.status_code == 200
+
+def test_root_template_response():
+    client = fastapi.testclient.TestClient(rslv.app.app)
+    response = client.get("/")
+    assert response.status_code == 200
+    assert "text/html" in response.headers["content-type"]

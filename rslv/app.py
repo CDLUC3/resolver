@@ -113,7 +113,10 @@ def create_app() -> fastapi.FastAPI:
 
     @app.get("/", include_in_schema=False)
     async def redirect_docs(request: fastapi.Request):
-        return templates.TemplateResponse("index.html", {"request": request})
+        return templates.TemplateResponse(
+            request=request,
+            name="index.html",
+        )
 
     @app.get("/favicon.ico", include_in_schema=False)
     async def get_favicon():
